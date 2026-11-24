@@ -1,6 +1,6 @@
 {
   "name": "sprinkle-shot",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "description": "봇과 대전하는 1인칭 웹 FPS. 정적 클라이언트와 멀티 준비용 WebSocket 서버.",
   "type": "module",
