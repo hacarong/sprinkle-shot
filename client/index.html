@@ -21,20 +21,35 @@
 <div id="boom"></div>
 <div id="hurt"></div>
 <div id="dir" aria-hidden="true"><i></i></div>
+<canvas id="mm" width="264" height="264" aria-hidden="true"></canvas>
+<div id="fps" aria-hidden="true"></div>
 <div id="boss" hidden><span id="bn">거신</span><span id="bb"><i id="bbi"></i></span></div>
 <div id="joy"><i id="knob"></i></div>
 <button class="tb" id="rel" aria-label="재장전">장전</button>
 <button class="tb" id="wpn" aria-label="무기 교체">무기</button>
 <button class="tb" id="aim" aria-label="정조준" aria-pressed="false">조준</button>
+<button class="tb" id="jmp" aria-label="점프">점프</button>
+<button class="tb" id="dsh" aria-label="대시">대시</button>
+<button class="tb" id="grn" aria-label="수류탄 투척">폭탄</button>
+<button class="tb" id="pz" aria-label="일시정지">Ⅱ</button>
 <button class="tb" id="fire" aria-label="사격">사격</button>
+<div id="pk" hidden role="dialog" aria-modal="true" aria-labelledby="pkt">
+  <div class="card">
+    <h2 id="pkt">강화 선택</h2>
+    <p class="sub">셋 중 하나 선택 · 숫자 키 1·2·3</p>
+    <div id="pkl"></div>
+  </div>
+</div>
 <div id="ov">
   <div class="card">
     <h1 id="ttl">봇 아레나</h1>
-    <p class="sub" id="subt">인페르노풍 복층 맵의 웨이브 생존전</p>
+    <p class="sub" id="subt">웨이브 생존전</p>
     <p id="res" hidden></p>
     <ul id="help">
       <li>터치: 왼쪽 드래그 이동 · 오른쪽 드래그 조준 · 사격 버튼</li>
       <li>키보드: WASD 이동 · 방향키 조준 · Space 사격 · R 재장전 (키 설정에서 변경)</li>
+      <li>동작: E 점프 · 왼쪽 Shift 대시 · G 수류탄 · P 또는 Esc 일시정지</li>
+      <li>2웨이브마다 강화 3종 중 1개 선택</li>
       <li>마우스: 화면 클릭 후 조준 · 클릭 사격</li>
       <li>무기: 1·2·3 · Q · 휠 교체 · 우클릭(누름) 또는 F 정조준</li>
       <li>아이템: 체력 · 탄약 · 강화탄 · 로켓(4번 무기) · 지원 드론(누적 최대 4기)</li>
@@ -44,15 +59,33 @@
       <li>보스: 10웨이브마다 거신 → 모선 → 분쇄자 순환 · 25웨이브마다 슈퍼 보스</li>
       <li>낮은 엄폐물 뒤는 피격 차단 · 머리 명중 2배 피해</li>
     </ul>
+    <label class="sel" for="mp">맵
+      <select id="mp"></select>
+    </label>
     <label class="sel" for="sw">시작 웨이브
       <select id="sw"><option value="1">1</option><option value="5">5</option><option value="10">10 · 보스</option><option value="15">15</option><option value="20">20 · 보스</option><option value="25">25 · 슈퍼 보스</option><option value="30">30 · 보스</option></select>
     </label>
     <div class="row">
       <button class="b" id="go">시작</button>
+      <button class="b o" id="rst" hidden>처음부터</button>
       <button class="b o" id="snd" aria-pressed="true">소리 켬</button>
       <button class="b o" id="shd" aria-pressed="true">그림자 켬</button>
       <button class="b o" id="hq" aria-pressed="true">고급 효과 켬</button>
       <button class="b o" id="kbtn" aria-expanded="false">키 설정</button>
+      <button class="b o" id="sbtn" aria-expanded="false">설정</button>
+    </div>
+    <div id="sets" hidden>
+      <label class="sr" for="sens">조준 감도 <output id="sensv" for="sens"></output><input id="sens" type="range" min="0.3" max="2.5" step="0.1"></label>
+      <label class="sr" for="vol">음량 <output id="volv" for="vol"></output><input id="vol" type="range" min="0" max="1" step="0.05"></label>
+      <label class="sel" for="cap">프레임 제한
+        <select id="cap"><option value="0">제한 없음</option><option value="120">120</option><option value="60">60</option><option value="30">30</option></select>
+      </label>
+      <label class="sel" for="diff">난이도
+        <select id="diff"><option value="0">쉬움</option><option value="1">보통</option><option value="2">어려움</option></select>
+      </label>
+      <label class="ck" for="dync"><input id="dync" type="checkbox"> 자동 해상도 조절</label>
+      <label class="ck" for="fpsc"><input id="fpsc" type="checkbox"> FPS 표시</label>
+      <label class="ck" for="minic"><input id="minic" type="checkbox"> 미니맵</label>
     </div>
     <div id="keys" hidden>
       <p class="kh">항목 선택 후 원하는 키 입력 · Esc 취소</p>
@@ -62,6 +95,7 @@
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="maps.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
