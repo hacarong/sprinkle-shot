@@ -71,3 +71,25 @@ button.b{min-height:44px;padding:0 24px;border-radius:8px;font:inherit;font-size
 .kb.on{border-color:#A68FBD;border-style:dashed}
 button:focus-visible{outline:2px solid #EEECE9;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* v0.3: 미니맵 · FPS · 추가 버튼 · 강화 선택 · 설정 */
+#mm{position:fixed;left:16px;top:96px;width:132px;height:132px;border-radius:8px;pointer-events:none;display:none}
+#fps{position:fixed;left:16px;bottom:12px;padding:4px 8px;border-radius:6px;background:rgba(34,34,34,.72);color:#EEECE9;font-size:13px;font-variant-numeric:tabular-nums;pointer-events:none;display:none}
+#jmp{right:208px;bottom:32px;width:64px;height:64px;font-size:13px}
+#dsh{right:208px;bottom:108px;width:64px;height:64px;font-size:13px}
+#grn{right:114px;bottom:184px;width:64px;height:64px;font-size:13px}
+#pz{right:16px;top:96px;width:44px;height:44px;font-size:16px;border-radius:8px}
+#pk{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:rgba(34,34,34,.8);overflow:auto}
+#pk[hidden]{display:none}
+h2{font-family:"Noto Sans KR",sans-serif;font-weight:800;color:#EEECE9;font-size:28px;letter-spacing:-.03em;line-height:1.2}
+#pkl{display:grid;gap:16px}
+.pkb{display:block;width:100%;min-height:64px;padding:16px 24px;text-align:left;border-radius:8px;border:1.5px solid #48424E;background:#363538;color:#C1BDC6;font:inherit;font-size:14px;line-height:1.6;cursor:pointer;transition:background-color .12s}
+.pkb b{display:block;color:#EEECE9;font-size:17px}
+.pkb:hover{border-color:#C1BDC6}
+#sets{margin-top:32px;border-top:1px solid #48424E;padding-top:24px}
+.sr{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;margin-bottom:24px;font-size:14px;color:#EEECE9}
+.sr input{grid-column:1/-1;width:100%;height:44px;accent-color:#A68FBD}
+.sr output{font-variant-numeric:tabular-nums;color:#C1BDC6}
+.ck{display:flex;align-items:center;gap:12px;min-height:44px;font-size:14px;color:#EEECE9}
+.ck input{width:20px;height:20px;accent-color:#A68FBD}
+input:focus-visible{outline:2px solid #EEECE9;outline-offset:3px}
+.sel select{max-width:100%;min-width:0;flex:1}

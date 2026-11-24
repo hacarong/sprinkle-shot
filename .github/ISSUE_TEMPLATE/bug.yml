@@ -1,0 +1,43 @@
+name: 버그 신고
+description: 게임이나 서버의 오동작 보고
+title: "[버그] "
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 현상
+      description: 무엇이 잘못 동작했는지 적어 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 방법
+      placeholder: |
+        1. 맵 선택
+        2. 웨이브 5에서 ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+  - type: input
+    id: env
+    attributes:
+      label: 환경
+      description: 기기, 브라우저, 화면 주사율
+      placeholder: 갤럭시 S24 · 크롬 · 120Hz
+    validations:
+      required: true
+  - type: input
+    id: perf
+    attributes:
+      label: FPS 표시 값
+      description: 성능 문제라면 설정의 FPS 표시를 켜고 수치를 적어 주세요.
+      placeholder: 48 FPS · 20.8ms · 해상도 70%
+  - type: textarea
+    id: log
+    attributes:
+      label: 콘솔 오류나 화면 캡처

@@ -1,0 +1,27 @@
+name: 기능 제안
+description: 새 기능, 맵, 적, 아이템, 밸런스 조정 제안
+title: "[제안] "
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: 분류
+      options: [맵, 적·보스, 무기·아이템, 조작·UI, 성능, 멀티, 사운드·그래픽, 기타]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 제안 내용
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 필요한 이유
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 조건
+      description: 무엇이 되면 끝난 것으로 볼지 적어 주세요.
