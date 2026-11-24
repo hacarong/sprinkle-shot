@@ -998,7 +998,7 @@ function reset(){
   P={x:(MDEF.start[0]+.5)*CS,z:(MDEF.start[1]+.5)*CS,y:0,vy:0,yaw:0,pitch:0,hp:100,mhp:100,gr:3,gc:0,dc:0,ds:0,dq:0,dvx:0,dvz:0,ac:0,mc:0,rsh:0,relE:false,dm:0,air:0,did:0,am:[24,6,5,0,META.own.flame?100:0,META.own.rail?3:0],rs:[72,18,15,0,META.own.flame?100:0,META.own.rail?6:0],cd:0,rel:0,pw:0,sh:0,ov:0,vp:0};
   for(q=0;q<DBN;q++){dbL[q]=0;debris.setMatrixAt(q,_dm.makeScale(0,0,0))}debris.instanceMatrix.needsUpdate=true;
   for(q=0;q<RF.length;q++){RF[q].l=0;RF[q].m.visible=false}for(q=0;q<PL.length;q++){PL[q].l=0;PL[q].m.visible=false}for(q=0;q<DN.length;q++){DN[q].l=0;DN[q].m.visible=false}
-  tpT=0;tpLock=false;dirT=0;vpA=0;waveT=0;pkW=0;PK={dmg:1,rate:1,rel:1,mag:1,spd:1,dr:1,shw:0,grx:0,dash:1};
+  tpT=0;tpLock=false;dirT=0;vpA=0;waveT=0;pkW=0;PK=newPK();ST={shots:0,hits:0,heads:0,kw:{},t:0,boss:0,bonus:0,perks:[],cause:'',banked:false};KW='';hitBy='';WM=null;wmT=0;wmDone=0;scene.fog.near=22;scene.fog.far=104;st('wtm','display','none');
   for(q=0;q<GR.length;q++)GR[q].visible=false;for(q=0;q<WR.length;q++)WR[q].visible=false;grenades=[];booms=[];slowT=0;ets=1;comboN=0;comboT=0;bulletT=0;hbT=0;stepD=0;
   for(q=0;q<COV.length;q++)if(COV[q].kind===2){COV[q].dead=0;COV[q].fz=0;COV[q].hp=50;COV[q].g.visible=true}
   adsA=0;adsT=false;rmb=false;swT=0;nextW=0;showGun(0);setAim();
@@ -1028,19 +1028,27 @@ function addBot(tp,c,hpMul,el){
   bots.push(b);return b;
 }
 function spawnWave(){
+  /* 웨이브 변형: 4웨이브부터 30% 확률(보스 웨이브 제외) */
+  scene.fog.near=22;scene.fog.far=104;st('wtm','display','none');WM=null;wmDone=0;
+  if(!bossFor(wave+1)&&wave+1>=4&&Math.random()<.3)WM=['fog','elite','barrel','timed'][Math.random()*4|0];
   wave++;waveT=0;var bt=bossFor(wave),alive=0,q,c,t,tp,nw='',dd;for(q=0;q<bots.length;q++)if(bots[q].die<=0)alive++;
   var n=Math.max(0,Math.min(bt?Math.min(8,3+(wave/5|0)):Math.min(14,3+wave),24-alive));
   if(bt){ /* 보스 */
     t=0;do{c=SPAWN[Math.random()*SPAWN.length|0];t++}while(t<60&&(c[2]>0||Math.hypot((c[0]+.5)*CS-P.x,(c[1]+.5)*CS-P.z)<26));
     bossB=addBot(bt,c,bt==='over'?Math.max(1,wave/25):1+(wave-10)/25);sRoar();ringFx(bossB.x,0,bossB.z,0xc9a9ee,14,.9);
   }
+  if(WM==='elite')n=Math.ceil(n*.6);
+  if(WM==='fog'){scene.fog.near=3;scene.fog.far=30}
+  if(WM==='timed')wmT=35;
+  if(WM==='barrel'){for(q=0;q<COV.length;q++)if(COV[q].kind===2&&COV[q].dead){COV[q].dead=0;COV[q].fz=0;COV[q].hp=50;COV[q].g.visible=true}
+    for(q=0;q<3;q++){t=0;do{c=SPAWN[Math.random()*SPAWN.length|0];t++}while(t<40&&Math.hypot((c[0]+.5)*CS-P.x,(c[1]+.5)*CS-P.z)<14);addBot('bomber',c)}}
   for(q=0;q<n;q++){
     tp=pickType(wave,bt?q+1:q);if(!seen[tp]){seen[tp]=1;nw=BT[tp].n}
     t=0;do{c=SPAWN[Math.random()*SPAWN.length|0];t++;dd=Math.hypot((c[0]+.5)*CS-P.x,(c[1]+.5)*CS-P.z)}while(t<50&&(dd<14||dd>(t<30?46:999)||(tp==='heavy'&&c[2]>0)));
-    addBot(tp,c,0,wave>=6&&tp!=='mite'&&Math.random()<.1);
+    addBot(tp,c,0,tp!=='mite'&&(WM==='elite'?Math.random()<.5:wave>=6&&Math.random()<.1));
   }
   if(wave%5===0)for(q=0;q<COV.length;q++)if(COV[q].kind===2&&COV[q].dead){COV[q].dead=0;COV[q].fz=0;COV[q].hp=50;COV[q].g.visible=true}
-  say('웨이브 '+wave+(bt?(bt==='over'?' · 슈퍼 보스 ':' · 보스 ')+BT[bt].n+' 출현':nw?' · '+nw+' 출현':''));if(!bt)sWave();
+  say('웨이브 '+wave+(bt?(bt==='over'?' · 슈퍼 보스 ':' · 보스 ')+BT[bt].n+' 출현':WM?' · 변형: '+{fog:'짙은 안개',elite:'정예 부대',barrel:'폭발물 지대',timed:'35초 내 섬멸'}[WM]:nw?' · '+nw+' 출현':''));if(!bt)sWave();
 }
 var msgT=0,noteT=0;
 function say(t){$('msg').textContent=t;msgT=1.6}
@@ -1615,7 +1623,11 @@ function update(dt){
   }
   var al=0;for(q=0;q<bots.length;q++)if(bots[q].die<=0&&bots[q].tp!=='pylon')al++;
   /* 남은 적 2기 이하 또는 38초 경과 시 다음 웨이브 */
-  if(pend<=0&&!(bossB&&bossB.die<=0)&&(al<=2||waveT>38)){pend=wave?1:.01;if(wave&&!al)sClear()}
+  if(WM==='timed'&&!wmDone){wmT-=dt;st('wtm','display','block');var wt2='제한 시간 '+Math.max(0,Math.ceil(wmT))+'초';if(_sv.wtm!==wt2){_sv.wtm=wt2;$('wtm').textContent=wt2}
+    if(al===0){wmDone=1;ST.bonus+=15;note('시간 내 섬멸 · 보급 투하');sClear();st('wtm','display','none');
+      ['sd','ov','am'].forEach(function(t,n){items.push({g:mkItem(t),type:t,x:P.x+Math.cos(n*2.1)*1.5,y:P.y,z:P.z+Math.sin(n*2.1)*1.5,life:30})})}
+    else if(wmT<=0){wmDone=1;note('시간 초과');st('wtm','display','none')}}
+  if(pend<=0&&!(bossB&&bossB.die<=0)&&(al<=(WM==='timed'&&!wmDone?0:2)||waveT>38)){pend=wave?1:.01;if(wave&&!al)sClear()}
   if(pend>0){pend-=dt;if(pend<=0){
     if(wave&&wave%2===0&&pkW!==wave){pkW=wave;pend=.05;openPick();return}
     if(wave){P.hp=Math.min(P.mhp,P.hp+10);if(PK.shw)P.sh=Math.min(120,P.sh+PK.shw)}spawnWave()}}
@@ -1738,8 +1750,14 @@ function sync(){
   var tf=BF+(W.ads*BF/70-BF)*a;if(Math.abs(cam.fov-tf)>.01){cam.fov=tf;cam.updateProjectionMatrix()}
   st('scope','opacity',sc?'1':'0');st('hud','visibility',sc?'hidden':'');var cc=sc?'sc':a>.5?'ads':'';if(_sv.chc!==cc){_sv.chc=cc;$('ch').className=cc}
   flash.visible=flashT>0;if(flashT>0){flash.rotation.z=Math.random()*6.3;var s=.8+Math.random()*.7;flash.scale.set(s,s,s)}
-  var gp=Math.round(6+bloom*14+(CUR===1?10:CUR===2?8:0));if(_sv.chg!==gp){_sv.chg=gp;$('ch').style.setProperty('--g',gp+'px')}st('hm','opacity',hitM>0?'1':'0');
+  var cg=Math.round(6+bloom*14+(CUR===1?10:CUR===2?8:CUR===4?12:0));if(_sv.chg!==cg){_sv.chg=cg;$('ch').style.setProperty('--g',cg+'px')}st('hm','opacity',hitM>0?'1':'0');
 }
+var WM=null,wmT=0,wmDone=0;
+function autoOn(dt){if(!CFG.auto||!touchAim)return false;afT-=dt;if(afT<=0){afT=.07;afOn=P.am[CUR]>0&&aimHit()}return afOn}
+/* 첫 실행 안내 */
+var tipOn=false,tipI=0,tipT=0,TIPS=[];
+function tipTick(dt){if(!tipOn)return;tipT-=dt;if(tipT>0)return;tipI++;
+  if(tipI>=TIPS.length){tipOn=false;$('tip').textContent='';try{localStorage.setItem('ss_tut','1')}catch(e){}}else{$('tip').textContent=TIPS[tipI];tipT=5.5}}
 var hudC='',mmT=0,mmB=null,MMS=132;
 /* 미니맵: 북쪽 고정. 플레이어 삼각형 · 적 원 · 보스 사각형 · 아이템 마름모 */
 function drawMini(){
@@ -1798,8 +1816,12 @@ function over(){
   $('rst').hidden=true;$('pk').hidden=true;
   var nb=kills>best;if(nb){best=kills;try{localStorage.setItem(BKEY,best)}catch(e){}}
   $('ttl').textContent='전투 종료';$('subt').textContent=nb?'최고 기록 갱신':'다음 도전 대기';
-  $('boss').hidden=true;$('res').hidden=false;$('res').textContent='처치 '+kills+' · 웨이브 '+wave+' · 최고 '+best;
-  $('help').hidden=true;$('go').textContent='다시 시작';$('msg').textContent='';$('note').textContent='';
+  var earn=bank(),top='없음',tv=0,k2;for(k2 in ST.kw)if(ST.kw[k2]>tv){tv=ST.kw[k2];top=k2}
+  var rows=[['처치',kills],['웨이브',wave],['최고 기록',best],['생존 시간',fmtT(ST.t)],['명중률',ST.shots?Math.round(ST.hits/ST.shots*100)+'%':'-'],['헤드샷',ST.heads],
+    ['최다 처치',top+(tv?' '+tv:'')],['사망 원인',ST.cause],['획득 스프링클','+'+earn],['보유 스프링클',META.cur]],rs=$('res');
+  rs.textContent='';rows.forEach(function(r){var d=document.createElement('div'),t=document.createElement('dt'),v=document.createElement('dd');t.textContent=r[0];v.textContent=r[1];d.appendChild(t);d.appendChild(v);rs.appendChild(d)});
+  $('boss').hidden=true;rs.hidden=false;$('tip').textContent='';st('wtm','display','none');
+  $('go').textContent='다시 시작';$('msg').textContent='';$('note').textContent='';
   hud();$('ov').hidden=false;$('go').focus();
 }
 $('go').addEventListener('click',function(){if(state==='pause')resume();else start()});
