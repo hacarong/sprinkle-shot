@@ -188,7 +188,7 @@ function renderPost(){
     p.mG.uniforms.tD.value=p.rb.texture;p.mG.uniforms.dir.value.set(0,r/bh);renderer.setRenderTarget(p.ra);renderer.render(p.sc,p.cm)}
   var play=state==='play',slo=play&&slowT>0;
   u.tS.value=p.rs.texture;u.tB.value=p.ra.texture;u.uT.value=tNow%10;
-  u.uAb.value=RM?0:.0012+(play?hurt*.007+boomA*.014+shake*.004+(slo?.004:0):0);
+  u.uAb.value=RM?0:.0012+(play?hurt*.007+boomA*.014*CFG.fls+shake*.004*CFG.shk+(slo?.004:0):0);
   u.uSat.value=play&&P.hp<30?.7:slo?.8:1.1;if(slo)u.uTint.value.set(.9,.98,1.1);else u.uTint.value.set(1.03,1,.97);
   p.q.material=p.mF;renderer.setRenderTarget(null);renderer.render(p.sc,p.cm);
 }
@@ -1753,9 +1753,9 @@ function sync(){
   var q,b,m;
   ip(P);cam.position.set(IX,IY+1.6+(RM?0:Math.sin(bobT*2)*.025),IZ);cam.rotation.set(P.pitch+kick,P.yaw+kickY,0);
   mLight.position.copy(cam.position);
-  if(shake>0){cam.rotation.x+=(Math.random()-.5)*shake*.07;cam.rotation.y+=(Math.random()-.5)*shake*.05;cam.rotation.z=(Math.random()-.5)*shake*.07}
+  if(shake>0){var sk=shake*CFG.shk;cam.rotation.x+=(Math.random()-.5)*sk*.07;cam.rotation.y+=(Math.random()-.5)*sk*.05;cam.rotation.z=(Math.random()-.5)*sk*.07}
   dome.position.copy(cam.position);clouds.position.copy(cam.position);clouds.rotation.y=tNow*.004;sun.position.set(P.x+10,P.y+24,P.z+26);sun.target.position.set(P.x,P.y,P.z);sun.target.updateMatrixWorld();
-  st('boom','opacity',boomA>0?boomA.toFixed(2):'0');st('slow','opacity',slowT>0?Math.min(1,slowT*2).toFixed(2):'0');
+  st('boom','opacity',boomA>0?(boomA*CFG.fls).toFixed(2):'0');st('slow','opacity',slowT>0?Math.min(1,slowT*2).toFixed(2):'0');
   if(DG&&AC)DG.gain.setTargetAtTime(state==='play'?Math.min(.03,drones.length*.011):0,AC.currentTime,.3);
   st('dir','opacity',dirT>0?Math.min(1,dirT).toFixed(1):'0');if(dirT>0)st('dir','transform','rotate('+dirA.toFixed(2)+'rad)');
   for(q=0;q<bots.length;q++){
