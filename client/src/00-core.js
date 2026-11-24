@@ -4,7 +4,7 @@ var _el={},_sv={};
 var $=function(id){return _el[id]||(_el[id]=document.getElementById(id))};
 /* 값이 바뀔 때만 DOM에 기록 */
 function st(id,prop,val){var k=id+prop;if(_sv[k]!==val){_sv[k]=val;$(id).style[prop]=val}}
-var CFG={sens:1,vol:1,cap:0,fps:false,dyn:true,mini:true,diff:1,bsz:1,auto:false,shk:1,fls:1,hl:0};
+var CFG={sens:1,vol:1,cap:0,fps:false,dyn:true,mini:true,diff:1,bsz:1,auto:false,shk:1,fls:1,hl:0,name:''};
 try{var c0=JSON.parse(localStorage.getItem('ss_cfg'))||{};for(var ck in CFG)if(typeof c0[ck]===typeof CFG[ck])CFG[ck]=c0[ck]}catch(e){}
 function saveCfg(){try{localStorage.setItem('ss_cfg',JSON.stringify(CFG))}catch(e){}}
 var DFD=[.7,1,1.35],DFH=[.85,1,1.2]; /* 난이도: 받는 피해 · 적 체력 */

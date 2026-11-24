@@ -164,3 +164,12 @@ input:focus-visible{outline:2px solid #EEECE9;outline-offset:3px}
   .pkic{width:64px;height:64px;margin:0;grid-row:1/span 4}.pki{width:34px;height:34px}
   .pko{text-align:left}
 }
+/* v0.6: 순위 · 멀티 */
+.sel input[type=text]{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:8px;border:1.5px solid #48424E;background:#363538;color:#EEECE9;font:inherit;font-size:15px}
+.sel input[type=text]:focus-visible{outline:2px solid #EEECE9;outline-offset:3px}
+.sel input::placeholder{color:#C1BDC6;opacity:.7}
+#rkt{border-collapse:collapse;width:100%;font-size:14px;line-height:1.8;font-variant-numeric:tabular-nums}
+#rkt th,#rkt td{padding:4px 8px;text-align:left;border-bottom:1px solid #48424E;white-space:nowrap}
+#rkt th{color:#EEECE9;font-weight:700}
+.menu{flex-wrap:wrap}
+.t{flex:1 1 30%}

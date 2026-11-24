@@ -1,9 +1,12 @@
 /* ================= 흐름 ================= */
 function start(){
+  if(NET.on&&!NET.host){note('방장이 시작하면 자동으로 합류');return}
+  NET.guest=false;
   initAudio();
   if(AC&&AC.state==='suspended'){try{AC.resume()}catch(e){}}
   bank();cap=null;reset();state='play';$('ov').hidden=true;$('rst').hidden=true;$('pk').hidden=true;firing=false;K={};acc=0;
   var sw0=+$('sw').value||1; /* 상위 웨이브 시작 시 보급 */
+  ST.sw=sw0;
   if(sw0>1){wave=sw0-1;P.rs[0]=72+sw0*8;P.rs[1]=18+sw0;P.rs[2]=15+(sw0>>1);P.rs[3]=Math.min(9,2+(sw0/5|0));P.am[3]=1;P.sh=Math.min(120,40+sw0*3);
     for(var q=0;q<Math.min(5,1+(sw0/8|0));q++)addDrone();for(q=2;q<=sw0;q++)if(INTRO[q])seen[INTRO[q]]=1}
   /* 해금 효과 */
@@ -24,6 +27,7 @@ function bank(){
 }
 function fmtT(t){return (t/60|0)+'분 '+(t%60|0)+'초'}
 function over(){
+  if(NET.on&&NET.host)netSend({k:'o'});
   state='dead';firing=false;rmb=false;adsT=false;adsA=0;setAim();K={};joyId=lookId=null;$('joy').style.display='none';
   try{if(document.exitPointerLock)document.exitPointerLock()}catch(e){}
   $('rst').hidden=true;$('pk').hidden=true;
@@ -34,7 +38,10 @@ function over(){
     ['최다 처치',top+(tv?' '+tv:'')],['사망 원인',ST.cause],['획득 스프링클','+'+earn],['보유 스프링클',META.cur]],rs=$('res');
   rs.textContent='';rows.forEach(function(r){var d=document.createElement('div'),t=document.createElement('dt'),v=document.createElement('dd');t.textContent=r[0];v.textContent=r[1];d.appendChild(t);d.appendChild(v);rs.appendChild(d)});
   $('boss').hidden=true;rs.hidden=false;$('tip').textContent='';st('wtm','display','none');
-  $('go').textContent='다시 시작';$('msg').textContent='';$('note').textContent='';
+  $('go').textContent='다시 시작';
+  /* 순위 등록: 웨이브 1에서 시작한 혼자 하는 판만 */
+  if(CFG.name&&ST.sw===1&&!NET.on&&window.fetch)fetch('api/scores',{method:'POST',body:JSON.stringify({name:CFG.name,map:MDEF.id,wave:wave,kills:kills})}).then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&j.rank)$('subt').textContent+=' · 순위 '+j.rank+'위'}).catch(function(){});
+  netList();$('msg').textContent='';$('note').textContent='';
   hud();$('ov').hidden=false;$('go').focus();
 }
 $('go').addEventListener('click',function(){if(state==='pause')resume();else start()});
@@ -45,7 +52,7 @@ $('rst').addEventListener('click',start);
   function open(b,on){b.setAttribute('aria-expanded',on);$(b.getAttribute('data-p')).hidden=!on}
   Array.prototype.forEach.call(bs,function(b){b.addEventListener('click',function(){
     var on=b.getAttribute('aria-expanded')!=='true';Array.prototype.forEach.call(bs,function(o){open(o,false)});open(b,on);cap=null;
-    if(on&&b.getAttribute('data-p')==='shop')drawShop();if(on&&b.getAttribute('data-p')==='logP')drawLog()})});
+    if(on&&b.getAttribute('data-p')==='rankP')drawRank();if(on&&b.getAttribute('data-p')==='shop')drawShop();if(on&&b.getAttribute('data-p')==='logP')drawLog()})});
 })();
 /* 해금 */
 var SHOP=[['flame','화염방사기','5번 무기 · 근거리 지속 화염과 화상',200],['rail','레일건','6번 무기 · 모든 적을 관통',350],['perk','시작 강화','시작할 때 강화 1개 선택',150],
@@ -61,6 +68,17 @@ function drawShop(){
     b.addEventListener('click',function(){if(META.own[it[0]]||META.cur<it[3])return;META.cur-=it[3];META.own[it[0]]=1;saveMeta();sPick('sd');drawShop();
       var f=$('shopl').querySelectorAll('.sh')[SHOP.indexOf(it)];if(f)f.focus()});
     box.appendChild(b)});
+}
+/* 순위: 서버에서 현재 맵의 상위 20개 */
+function drawRank(){
+  var t=$('rkt'),m=$('rks');t.textContent='';m.textContent=MDEF.name+' 순위 불러오는 중';
+  if(!window.fetch){m.textContent='순위 서버에 연결할 수 없음';return}
+  fetch('api/scores?map='+MDEF.id).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+    if(!j.scores.length){m.textContent=MDEF.name+' · 등록된 기록 없음 · 설정에서 이름을 정하면 웨이브 1에서 시작한 판이 등록됨';return}
+    m.textContent=MDEF.name+' 상위 '+j.scores.length+'개 · 설정에서 이름을 정하면 웨이브 1에서 시작한 판이 등록됨';
+    var hr=t.insertRow();['순위','이름','웨이브','처치'].forEach(function(h){var th=document.createElement('th');th.scope='col';th.textContent=h;hr.appendChild(th)});
+    j.scores.forEach(function(s,n){var tr=t.insertRow();[n+1,s.name,s.wave,s.kills].forEach(function(v){tr.insertCell().textContent=v})});
+  }).catch(function(){m.textContent='순위 서버에 연결할 수 없음'});
 }
 /* 기록: 최근 30판과 요약 */
 function drawLog(){
@@ -90,7 +108,7 @@ function applyCfg(){
   function bind(id,key,num){var e=$(id);if(e.type==='checkbox')e.checked=CFG[key];else e.value=CFG[key];
     e.addEventListener(e.type==='range'?'input':'change',function(){CFG[key]=e.type==='checkbox'?e.checked:num?+e.value:e.value;saveCfg();applyCfg();out()})}
   function out(){$('sensv').textContent=CFG.sens.toFixed(1)+'배';$('volv').textContent=Math.round(CFG.vol*100)+'%';$('bszv').textContent=Math.round(CFG.bsz*100)+'%';$('shkv').textContent=Math.round(CFG.shk*100)+'%';$('flsv').textContent=Math.round(CFG.fls*100)+'%'}
-  bind('sens','sens',1);bind('vol','vol',1);bind('cap','cap',1);bind('diff','diff',1);bind('fpsc','fps');bind('dync','dyn');bind('minic','mini');bind('bsz','bsz',1);bind('autoc','auto');bind('shk','shk',1);bind('fls','fls',1);bind('hl','hl',1);out();applyCfg();
+  bind('sens','sens',1);bind('vol','vol',1);bind('cap','cap',1);bind('diff','diff',1);bind('fpsc','fps');bind('dync','dyn');bind('minic','mini');bind('bsz','bsz',1);bind('autoc','auto');bind('shk','shk',1);bind('fls','fls',1);bind('hl','hl',1);bind('pname','name');$('pname').addEventListener('change',function(){$('nname').value=CFG.name});out();applyCfg();
 })();
 function setShd(v){SHD=v;sun.castShadow=v;var b=$('shd');b.setAttribute('aria-pressed',v);b.textContent=v?'그림자 켬':'그림자 끔';try{localStorage.setItem('botarena3d_shadow',v?'1':'0')}catch(e){}}
 $('shd').addEventListener('click',function(){setShd(!SHD)});setShd(SHD);
@@ -140,6 +158,7 @@ function frame(t){
     ALPHA=Math.max(0,Math.min(1,acc/STEP));
     if(state==='play')hud();
   }else if(state==='menu'){P.yaw+=dt*.15}
+  netFrame(dt);
   if(state!=='pause'&&state!=='pick')fx(dt*(bulletT>0?.3:1));
   sync();
   if(SHD&&t-lastSh>=15.5){renderer.shadowMap.needsUpdate=true;lastSh=t}

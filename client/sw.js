@@ -1,5 +1,5 @@
 /* 서비스 워커: 네트워크 우선, 실패 시 캐시. 배포 직후 새 버전이 바로 보이고, 오프라인에서도 실행됩니다. */
-var CACHE = 'ss-v2';
+var CACHE = 'ss-v3';
 var FILES = ['./', 'style.css', 'maps.js', 'game.js', 'vendor/three.min.js', 'manifest.webmanifest', 'icons/icon-192.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
