@@ -17,6 +17,7 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 const MAX_MSG = 2048; // 메시지 1건 최대 바이트
 const RELAY_HZ = 30; // 참가자 1명당 초당 중계 상한
@@ -31,7 +32,7 @@ function loadStatic(dir) {
       else {
         const type = MIME[extname(p)] ?? 'application/octet-stream';
         const body = readFileSync(p);
-        const text = type.startsWith('text/') || type.startsWith('application/json');
+        const text = /^text\/|json/.test(type);
         files.set('/' + relative(dir, p).split(sep).join('/'), { type, body, gz: text ? gzipSync(body) : null });
       }
     }
