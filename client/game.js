@@ -1175,11 +1175,14 @@ document.addEventListener('visibilitychange',function(){if(!AC)return;try{if(doc
 
 /* ================= 입력 ================= */
 var K={},firing=false,joyId=null,jx0=0,jy0=0,jx=0,jy=0,lookId=null,lx=0,ly=0,fireId=null,touchAim=false;
-var DEF={fwd:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',fire:'Space',rel:'KeyR',aim:'KeyF',next:'KeyQ',w1:'Digit1',w2:'Digit2',w3:'Digit3',w4:'Digit4',w5:'Digit5',w6:'Digit6',alt:'KeyX',melee:'KeyV',jump:'KeyE',dash:'ShiftLeft',gren:'KeyG',pause:'KeyP',lL:'ArrowLeft',lR:'ArrowRight',lU:'ArrowUp',lD:'ArrowDown'},
+var DEF={fwd:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',fire:'KeyJ',rel:'KeyR',aim:'KeyF',next:'KeyQ',w1:'Digit1',w2:'Digit2',w3:'Digit3',w4:'Digit4',w5:'Digit5',w6:'Digit6',alt:'KeyX',melee:'KeyV',jump:'Space',dash:'ShiftLeft',gren:'KeyG',pause:'KeyP',lL:'ArrowLeft',lR:'ArrowRight',lU:'ArrowUp',lD:'ArrowDown'},
     ANAME={fwd:'전진',back:'후진',left:'좌 이동',right:'우 이동',fire:'사격',rel:'재장전',aim:'정조준',next:'다음 무기',w1:'소총',w2:'산탄총',w3:'저격총',w4:'로켓런처',w5:'화염방사기',w6:'레일건',alt:'보조 사격',melee:'근접 공격',jump:'점프',dash:'대시',gren:'수류탄',pause:'일시정지',lL:'조준 좌',lR:'조준 우',lU:'조준 상',lD:'조준 하'},
     BIND={},ACT={},cap=null;
 function mapB(){ACT={};for(var a in BIND)if(BIND[a])ACT[BIND[a]]=a}
 function loadB(){var o={},a;try{o=JSON.parse(localStorage.getItem('botarena3d_keys'))||{}}catch(e){}
+  /* 0.6: 기본 키 변경(Space 점프, J 사격). 이전 기본값을 그대로 쓰던 저장값은 새 기본값으로 옮김 */
+  var kv=0;try{kv=+localStorage.getItem('ss_keyv')||0}catch(e){}
+  if(kv<1){if(o.fire==='Space')delete o.fire;if(o.jump==='KeyE')delete o.jump;try{localStorage.setItem('ss_keyv','1')}catch(e){}}
   for(a in DEF)BIND[a]=typeof o[a]==='string'?o[a]:DEF[a];mapB()}
 function saveB(){mapB();try{localStorage.setItem('botarena3d_keys',JSON.stringify(BIND))}catch(e){}}
 function keyName(c){
@@ -1921,7 +1924,7 @@ function start(){
   var seenT=false;try{seenT=!!localStorage.getItem('ss_tut')}catch(e){}
   tipOn=!seenT;tipI=-1;tipT=1.2;$('tip').textContent='';
   TIPS=document.body.classList.contains('touch')?['왼쪽 화면을 드래그해 이동','오른쪽 화면을 드래그해 조준','사격 버튼을 누른 채 드래그하면 조준 유지','장전 · 무기 · 조준 버튼은 이동 중에도 동작','점프로 낮은 상자에 오르고, 대시로 위험에서 이탈']
-    :['WASD로 이동, 화면을 클릭해 마우스 조준','좌클릭 사격 · 우클릭 정조준 · R 재장전','E 점프 · 왼쪽 Shift 대시 · G 수류탄','X 보조 사격 · V 근접 공격 · 1~6 무기 교체','P 또는 Esc로 일시정지와 설정'];
+    :['WASD로 이동, 화면을 클릭해 마우스 조준','좌클릭 사격 · 우클릭 정조준 · R 재장전','Space 점프 · 왼쪽 Shift 대시 · G 수류탄','X 보조 사격 · V 근접 공격 · 1~6 무기 교체','P 또는 Esc로 일시정지와 설정'];
   try{cv.focus()}catch(e){}
   if(o.perk)openPick();else relock();
 }
