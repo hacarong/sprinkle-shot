@@ -1379,12 +1379,25 @@ function relock(){
   setTimeout(function(){if(state==='play'&&!locked()&&!touchAim)note('화면을 클릭하면 조준 재개')},350);
 }
 var PCAT={'화력 증폭':0,'속사 기구':0,'빠른 손':0,'확장 탄창':0,'강화 장갑':1,'보급 방어막':1,'경량 장비':2,'추진기':2,'드론 개조':3,'폭파병':3},
-    PCN=['공격','방어','기동','지원','조합'],
-    PCI=['<circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',
-      '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',
-      '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
-      '<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V4M9 13v2M15 13v2M2 13h3M19 13h3"/>',
-      '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/><circle cx="12" cy="12" r="2"/>'],
+    PCN=['공격','방어','기동','지원','조합'],PCC=['#F0806C','#6FA8F0','#F0CC55','#52CDB6','#B98CF5'],
+    /* 강화별 아이콘(24×24, 선) */
+    PIC={'화력 증폭':'<path d="M12 3c1 3 4 5 4 9a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 0-8z"/>',
+      '속사 기구':'<path d="M4 7l5 5-5 5M10 7l5 5-5 5M16 7l5 5-5 5"/>',
+      '빠른 손':'<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>',
+      '확장 탄창':'<path d="M7 4h10v16H7zM7 9h10M7 14h10"/>',
+      '강화 장갑':'<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+      '보급 방어막':'<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M12 9v6M9 12h6"/>',
+      '경량 장비':'<path d="M3 8h10a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7"/>',
+      '추진기':'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+      '드론 개조':'<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V4M9 13v2M15 13v2M2 13h3M19 13h3"/>',
+      '폭파병':'<circle cx="11" cy="14" r="6"/><path d="M15 9l3-3M18 3v3h3"/>',
+      '연쇄 폭발':'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/><circle cx="12" cy="12" r="2"/>',
+      '위상 대시':'<path d="M3 12h11M10 6l6 6-6 6M20 5v14"/>',
+      '정밀 회수':'<circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',
+      '흡혈 탄환':'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+      '마지막 탄':'<path d="M9 21V10c0-3 1.5-6 3-7 1.5 1 3 4 3 7v11zM9 16h6"/>',
+      '집속탄':'<circle cx="12" cy="6" r="3"/><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/>',
+      '처형자':'<path d="M5 5l14 14M19 5L5 19"/><circle cx="12" cy="12" r="9"/>'},
     pkAt=0,pkRe=0;
 function drawPick(){
   var owned={},box=$('pkl'),q;ST.perks.forEach(function(n){owned[n]=(owned[n]||0)+1});
@@ -1395,7 +1408,8 @@ function drawPick(){
   pkOpt.forEach(function(p,n){
     var c=PCAT[p[0]]===undefined?4:PCAT[p[0]],b=document.createElement('button'),own=owned[p[0]]||0;
     b.type='button';b.className='pkb';
-    b.innerHTML='<span class="pkk" aria-hidden="true">'+(n+1)+'</span><svg class="pki" viewBox="0 0 24 24" aria-hidden="true">'+PCI[c]+'</svg><span class="pkc"></span><b></b><span class="pkd"></span><span class="pko"></span>';
+    b.style.setProperty('--pc',PCC[c]);
+    b.innerHTML='<span class="pkk" aria-hidden="true">'+(n+1)+'</span><span class="pkic"><svg class="pki" viewBox="0 0 24 24" aria-hidden="true">'+(PIC[p[0]]||'')+'</svg></span><span class="pkc"></span><b></b><span class="pkd"></span><span class="pko"></span>';
     b.querySelector('.pkc').textContent=PCN[c];b.querySelector('b').textContent=p[0];b.querySelector('.pkd').textContent=p[1];
     b.querySelector('.pko').textContent=own?'보유 '+own:'신규';
     b.setAttribute('aria-label',(n+1)+'번, '+PCN[c]+', '+p[0]+', '+p[1]+', '+(own?'보유 '+own:'신규'));
