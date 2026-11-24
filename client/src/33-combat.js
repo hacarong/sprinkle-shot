@@ -128,6 +128,7 @@ function dmgNum(x,y,z,amt,head){
 function beam(m,ax,ay,az,bx,by,bz,th){v1.set(ax,ay,az);v2.set(bx,by,bz);m.position.copy(v1).add(v2).multiplyScalar(.5);m.scale.set(th,th,Math.max(.1,v1.distanceTo(v2)));m.lookAt(v2);m.visible=true}
 /* 피해 적용 공통: 무적 · 흡혈 · 피해 숫자 · 처치. src 1 = 폭발(파편화) */
 function dmgBot(b,amt,x,y,z,head,src,noNum){
+  if(NET.guest){netHit(b,amt,x,y,z,head,src,noNum);return false}
   if(b.die>0||b.im>0)return false;
   if(b.inv){puff(x,y,z,4,3,.8,.7,1,.25);sShieldHit(x,z);if(tNow-invN>1.6){invN=tNow;note('무적 · 동력 첨탑 파괴')}return false}
   if(PK.exec&&b.hp<b.mhp*.3)amt*=1.4;
@@ -186,9 +187,9 @@ function lob(b){
   var m=null,q;for(q=0;q<GR.length;q++)if(!GR[q].visible){m=GR[q];break}
   if(!m)return;
   var ca=Math.cos(b.rot),sa=Math.sin(b.rot),gx=b.x+sa*.7+ca*.3,gz=b.z+ca*.7-sa*.3,gy=b.y+1.5,T2=1.25,
-      tx=P.x+(Math.random()-.5)*2.4,tz=P.z+(Math.random()-.5)*2.4;
+      tx=(TG||P).x+(Math.random()-.5)*2.4,tz=(TG||P).z+(Math.random()-.5)*2.4;
   m.visible=true;b.fl=.1;sLob(b);
-  grenades.push({m:m,x:gx,y:gy,z:gz,vx:(tx-gx)/T2,vz:(tz-gz)/T2,vy:(P.y-gy)/T2+.5*14*T2,fuse:-1,r:null});
+  grenades.push({m:m,x:gx,y:gy,z:gz,vx:(tx-gx)/T2,vz:(tz-gz)/T2,vy:((TG||P).y-gy)/T2+.5*14*T2,fuse:-1,r:null});
 }
 function airstrike(){
   var l=bots.filter(function(b){return b.die<=0}).sort(function(a,b){return Math.hypot(a.x-P.x,a.z-P.z)-Math.hypot(b.x-P.x,b.z-P.z)}).slice(0,7),q,b,f;
@@ -223,7 +224,7 @@ function hurtP(dmg,sx,sz){
   dmg=Math.round(dmg*DFD[CFG.diff]);if(dmg<=0)return false;
   if(sx!==undefined){dirA=Math.atan2((sx-P.x)*Math.cos(P.yaw)-(sz-P.z)*Math.sin(P.yaw),-(sx-P.x)*Math.sin(P.yaw)-(sz-P.z)*Math.cos(P.yaw));dirT=1}
   if(P.sh>0){var ab=Math.min(P.sh,dmg);P.sh-=ab;dmg-=ab;sHurt(1);if(dmg<=0){hurt=Math.max(hurt,.3);return false}}
-  P.hp-=dmg;hurt=1;sHurt(0);if(P.hp<=0){P.hp=0;ST.cause=hitBy||'알 수 없음';over();return true}return false;
+  P.hp-=dmg;hurt=1;sHurt(0);if(P.hp<=0){P.hp=0;if(NET.guest){netDown();return true}ST.cause=hitBy||'알 수 없음';over();return true}return false;
 }
 function explodeFx(x,y,z,k){
   var q,e=EX[0];for(q=1;q<EX.length;q++)if(EX[q].l<e.l)e=EX[q];
@@ -244,6 +245,7 @@ function explode(x,y,z,en){
   if(en!==1){l=bots.slice();for(q=0;q<l.length;q++){b=l[q];if(b.die>0)continue;d=Math.hypot(b.x-x,b.y+b.sc-y,b.z-z)-(b.boss?1:0);
     var R=en===2?5:en===5?3.6:6.5,D=en===2?150:en===3?320:en===5?90*PK.dmg:260*PK.dmg;if(en!==0&&en!==5)KW=en===3?'공습':'폭발';
     if(d<R)dmgBot(b,D*(1-Math.max(0,d)/R)*(P.pw>0&&en===0?2:1),b.x,b.y+b.sc*1.4,b.z,false,1)}}
+  if((en===1||en===2)&&NET.on&&NET.host)netBlast(x,y,z);
   if(en===1||en===2){l=drones.slice();for(q=0;q<l.length;q++){d=Math.hypot(l[q].x-x,l[q].y-y,l[q].z-z);if(d<4.6)hurtDrone(l[q],60*(1-d/4.6))}}
   if(en!==3&&en!==5&&state==='play'){hitBy=en===0?'자신의 폭발물':'폭발';d=Math.hypot(P.x-x,P.y+1-y,P.z-z);var pr=en===0?4:4.6;if(d<pr)hurtP((en===0?40:36)*(1-d/pr),x,z)}
 }
@@ -253,23 +255,23 @@ function launch(x,y,z,dx,dy,dz,en){
   rockets.push({m:m,x:x,y:y,z:z,dx:dx,dy:dy,dz:dz,l:en?6:3,e:en});
 }
 function fireRocket(dx,dy,dz,rx,rz){launch(P.x+dx*.9+rx*.18,P.y+1.5+dy*.9,P.z+dz*.9+rz*.18,dx,dy,dz,0)}
-function botShot(b,ch,dmg,d){ /* 반환값 true = 플레이어 사망 */
+function botShot(b,ch,dmg,d){if(!TG)TG=P; /* 반환값 true = 플레이어 사망 */
   var sc=b.sc,ca=Math.cos(b.rot),sa=Math.sin(b.rot),k=b.fly?(b.tp==='mother'?1.5:.4):sc,gx=b.x+(ca*.3+sa*.9)*k,gz=b.z+(-sa*.3+ca*.9)*k,
-      gy=b.y+(b.fly?(b.tp==='mother'?.9:.3):1.25*sc),ty=P.y+.95;
+      gy=b.y+(b.fly?(b.tp==='mother'?.9:.3):1.25*sc),ty=TG.y+.95;
   b.fl=.07;sBot(b);
   /* 일부 사격은 드론 · 포탑을 노림 */
   if(drones.length&&Math.random()<.28){var dr=drones[Math.random()*drones.length|0],dy0=dr.y+(dr.tur?.8:0);
     if(Math.hypot(dr.x-gx,dr.z-gz)<40&&los(gx,gy,gz,dr.x,dy0,dr.z)){tracer(gx,gy,gz,dr.x,dy0,dr.z,0xff9f8a);if(Math.random()<Math.min(.8,ch+.25))hurtDrone(dr,dmg*1.3);return false}}
-  if(!los(gx,gy,gz,P.x,ty,P.z)){ /* 엄폐물에 막힌 사격 */
-    var bl=Math.hypot(P.x-gx,ty-gy,P.z-gz)||1,bx=(P.x-gx)/bl,by=(ty-gy)/bl,bz=(P.z-gz)/bl,bt=ray(gx,gy,gz,bx,by,bz,bl);
+  if(!los(gx,gy,gz,TG.x,ty,TG.z)){ /* 엄폐물에 막힌 사격 */
+    var bl=Math.hypot(TG.x-gx,ty-gy,TG.z-gz)||1,bx=(TG.x-gx)/bl,by=(ty-gy)/bl,bz=(TG.z-gz)/bl,bt=ray(gx,gy,gz,bx,by,bz,bl);
     if(bt<0)bt=bl;tracer(gx,gy,gz,gx+bx*bt,gy+by*bt,gz+bz*bt,0xff9f8a);puff(gx+bx*bt,gy+by*bt,gz+bz*bt,5,2.4,1,.85,.6,.3);sRico(gx+bx*bt,gz+bz*bt);
     return false;
   }
   var hitP=Math.random()<ch,off=hitP?.15:1.1;
-  tracer(gx,gy,gz,P.x+(Math.random()-.5)*off*2,P.y+1.2+(Math.random()-.5)*off,P.z+(Math.random()-.5)*off*2,0xff9f8a);
+  tracer(gx,gy,gz,TG.x+(Math.random()-.5)*off*2,TG.y+1.2+(Math.random()-.5)*off,TG.z+(Math.random()-.5)*off*2,0xff9f8a);
   if(!hitP)sWhiz(sp(b.x,b.z).pan*-.6);
   if(hitP)hitBy=BT[b.tp].n;
-  return hitP?hurtP(dmg,b.x,b.z):false;
+  return hitP?hurtT(dmg,b.x,b.z):false;
 }
 /* 슈퍼 보스 단계: 66% 방어막과 첨탑 · 33% 폭주와 유성 · 주기적 증원 */
 function overTick(b,dt){

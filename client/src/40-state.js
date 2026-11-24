@@ -14,6 +14,7 @@ function reset(){
   adsA=0;adsT=false;rmb=false;swT=0;nextW=0;showGun(0);setAim();
   for(q=0;q<RK.length;q++)RK[q].visible=false;rockets=[];for(q=0;q<drones.length;q++)scene.remove(drones[q].m.g);drones=[];shake=0;boomA=0;bossB=null;seen={grunt:1};
   for(q=0;q<EX.length;q++){EX[q].l=0;EX[q].g.visible=false}for(q=0;q<SC.length;q++){SC[q].l=0;SC[q].m.visible=false}
+  NB={};TG=null;
   bots=[];items=[];wave=0;kills=0;pend=.01;flowT=0;hurt=0;hitM=0;recoil=0;bobT=0;bloom=0;kick=0;flashT=0;hudC='';
 }
 var INTRO={2:'rusher',3:'bomber',4:'sniper',5:'shield',6:'flyer',7:'stalker',8:'heavy',9:'gren',11:'medic',12:'split'},
@@ -35,14 +36,14 @@ function addBot(tp,c,hpMul,el){
     rc:2,sl:0,sm:8,mt:1,frz:0,inv:0,im:0,dash:0,dh:0,dx:0,dz:0,hc:0,tg:null,gc:4,m:mkBot(tp)};
   if(el)b.m.g.scale.setScalar(1.2);
   if(tp!=='mite')pillar(b.x,c[2],b.z,cf.boss?0xc9a9ee:tp==='pylon'?0xc9a9ee:0xff8a78);
-  bots.push(b);return b;
+  b.nid=++NID;bots.push(b);return b;
 }
 function spawnWave(){
   /* 웨이브 변형: 4웨이브부터 30% 확률(보스 웨이브 제외) */
   scene.fog.near=22;scene.fog.far=104;st('wtm','display','none');WM=null;wmDone=0;
   if(!bossFor(wave+1)&&wave+1>=4&&Math.random()<.3)WM=['fog','elite','barrel','timed'][Math.random()*4|0];
   wave++;waveT=0;var bt=bossFor(wave),alive=0,q,c,t,tp,nw='',dd;for(q=0;q<bots.length;q++)if(bots[q].die<=0)alive++;
-  var n=Math.max(0,Math.min(bt?Math.min(8,3+(wave/5|0)):Math.min(14,3+wave),24-alive));
+  var n=Math.max(0,Math.min((bt?Math.min(8,3+(wave/5|0)):Math.min(14,3+wave))+Object.keys(PEER).length*2,24-alive)); /* 참가자 1명당 적 2기 추가 */
   if(bt){ /* 보스 */
     t=0;do{c=SPAWN[Math.random()*SPAWN.length|0];t++}while(t<60&&(c[2]>0||Math.hypot((c[0]+.5)*CS-P.x,(c[1]+.5)*CS-P.z)<26));
     bossB=addBot(bt,c,bt==='over'?Math.max(1,wave/25):1+(wave-10)/25);sRoar();ringFx(bossB.x,0,bossB.z,0xc9a9ee,14,.9);

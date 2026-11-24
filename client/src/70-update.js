@@ -40,6 +40,7 @@ function shoot(alt){
     }
     var ex=ox+dx*bt,ey=oy+dy*bt,ez=oz+dz*bt,blk=false;
     tracer(ox+rx*side+dx*.9,oy-down+dy*.9,oz+rz*side+dz*.9,ex,ey,ez,pierce?0x9fd8ff:col);
+    if(NET.on&&pl===0&&tNow-NET.tT>.12){NET.tT=tNow;netSend({k:'t',a:[r1(ox),r1(oy-.2),r1(oz)],b:[r1(ex),r1(ey),r1(ez)]})}
     if(pierce){tracer(ox+rx*side+dx*.9,oy-down+dy*.9+.03,oz+rz*side+dz*.9,ex,ey+.03,ez,0xffffff);
       for(q=0;q<prc.length;q++){var pb=prc[q][0],pt2=prc[q][1],ph=prc[q][2];hitAny=true;if(ph)headAny=true;
         puff(ox+dx*pt2,oy+dy*pt2,oz+dz*pt2,8,3.5,.6,.85,1,.35);dmgBot(pb,W.dmg*PK.dmg*dmul*(ph?2.05:1)*(P.pw>0?2:1),ox+dx*pt2,oy+dy*pt2,oz+dz*pt2,ph,0)}}
@@ -186,21 +187,22 @@ function update(dt){
   }
   /* 적 */
   var rdt=dt,MD={rusher:[11,22,.65],stalker:[16,30,.8],split:[14,22,.9],mite:[4,7,.5]};dt*=ets;
-  for(q=bots.length-1;q>=0;q--){
-    b=bots[q];b.hit-=rdt;b.fl-=dt;b.im-=rdt;
+  if(NET.guest)netBots(rdt);
+  for(q=NET.guest?-1:bots.length-1;q>=0;q--){
+    b=bots[q];TG=NET.on&&NET.host?netTarget(b):P;b.hit-=rdt;b.fl-=dt;b.im-=rdt;
     if(b.burn>0&&b.die<=0){b.burn-=rdt;KW='화염방사기';if(Math.random()<rdt*8)puff(b.x,b.y+(b.fly?.4:b.sc),b.z,1,1.2,1,.55,.15,.4,0,1.5,0);if(dmgBot(b,11*PK.dmg*rdt,b.x,b.y+b.sc,b.z,false,0,2))continue}
     if(b.die>0){b.die-=rdt;grav(b,rdt,b.r);if(b.die<=0){killMesh(b);bots.splice(q,1)}continue}
     var tp=b.tp;if(tp==='pylon')continue;
     if(b.frz>0){b.frz-=rdt;if(!b.fly)grav(b,rdt,b.r);continue}
     if(tp==='over')overTick(b,dt);
-    var sc=b.sc,ex=P.x-b.x,ez=P.z-b.z,d=Math.hypot(ex,ez)||1,ux=ex/d,uz=ez/d,sp0=b.sp*dt,ox=b.x,oz=b.z,
+    var sc=b.sc,ex=TG.x-b.x,ez=TG.z-b.z,d=Math.hypot(ex,ez)||1,ux=ex/d,uz=ez/d,sp0=b.sp*dt,ox=b.x,oz=b.z,
         mvx=0,mvz=0,pathing=false,see;
     /* 시야 검사는 적마다 엇갈려 초당 약 9회 */
-    b.vt=(b.vt||0)-dt;if(b.vt<=0){b.vt=.09+Math.random()*.05;b.vs=d<(tp==='sniper'||tp==='mother'||tp==='over'?66:b.boss?50:b.fly?46:36)&&los(b.x,b.y+(b.fly?.7:1.7*sc),b.z,P.x,P.y+1.5,P.z)}see=b.vs;
+    b.vt=(b.vt||0)-dt;if(b.vt<=0){b.vt=.09+Math.random()*.05;b.vs=d<(tp==='sniper'||tp==='mother'||tp==='over'?66:b.boss?50:b.fly?46:36)&&los(b.x,b.y+(b.fly?.7:1.7*sc),b.z,TG.x,TG.y+1.5,TG.z)}see=b.vs;
     if(see&&!b.los)b.cd=Math.max(b.cd,.28+Math.random()*.3);
     b.los=see;b.pm-=dt;if(see)b.ls=0;else{b.ls+=dt;if(tp!=='crusher')b.ch=0}
     if(b.fly){ /* 말벌 드론 · 모선: 벽 위로 넘어와 머리 위에서 공격 */
-      var mo=tp==='mother',fty=mo?Math.max(P.y+6.5,7.8):see?P.y+2.8:7.3,fny=b.y+Math.max(-3.2*dt,Math.min(3.2*dt,fty-b.y));
+      var mo=tp==='mother',fty=mo?Math.max(TG.y+6.5,7.8):see?TG.y+2.8:7.3,fny=b.y+Math.max(-3.2*dt,Math.min(3.2*dt,fty-b.y));
       if(!solid(b.x,fny,b.z)&&!solid(b.x,fny+.75,b.z))b.y=fny;
       if(see){b.st-=dt;if(b.st<=0){b.sd=-b.sd;b.st=1+Math.random()*1.5}var fa=mo?(d>14?1:d<8?-1:0):(d>10?1:d<6?-1:0);mvx=ux*fa-uz*b.sd*.7;mvz=uz*fa+ux*b.sd*.7}else{mvx=ux;mvz=uz}
       var fnx=b.x+mvx*sp0,fnz=b.z+mvz*sp0;
@@ -227,27 +229,27 @@ function update(dt){
     else if(tp==='crusher'){ /* 분쇄자: 예고선 → 돌진 → 회복. 근접 내려찍기 */
       b.rc-=dt;b.sl-=dt;b.gc-=dt;
       if(b.dash>0){b.dash-=dt;move(b,b.dx*25*dt,b.dz*25*dt,b.r);b.ph+=dt*26;puff(b.x,b.y+.2,b.z,2,2,.7,.66,.6,.5);
-        if(!b.dh&&d<2.8&&Math.abs(P.y-b.y)<2.6){b.dh=1;if(!RM)shake=Math.max(shake,1);hitBy='분쇄자 돌진';if(hurtP(38,b.x,b.z))return}
+        if(!b.dh&&d<2.8&&Math.abs(TG.y-b.y)<2.6){b.dh=1;if(!RM)shake=Math.max(shake,1);hitBy='분쇄자 돌진';if(hurtT(38,b.x,b.z))return}
         if(b.dash<=0)b.cd=1.5}
       else if(b.ch>0){b.ch+=dt;if(b.ch<.75)b.rot=Math.atan2(ex,ez);
         if(b.ch>=1.05){b.ch=0;b.dash=.85;b.dh=0;b.dx=Math.sin(b.rot);b.dz=Math.cos(b.rot);sDash(b)}}
       else if(b.cd>0)b.cd-=dt;
-      else if(see&&d<26&&d>5&&b.rc<=0&&Math.abs(P.y-b.y)<1.6){b.ch=.01;b.rc=3.6;sCharge(b,1/ets)}
-      else if(d<5.5&&Math.abs(P.y-b.y)<2.6&&b.sl<=0){b.sl=1.5;b.fl=.2;if(!RM)shake=Math.max(shake,.9);nz(.4,.5,'lowpass',400,60,{rev:.6});tone('sine',90,28,.4,.6);
-        ringFx(b.x,b.y,b.z,0xffd9a0,11,.5);hitBy=BT[tp].n+' 내려찍기';if(hurtP(26,b.x,b.z))return}
+      else if(see&&d<26&&d>5&&b.rc<=0&&Math.abs(TG.y-b.y)<1.6){b.ch=.01;b.rc=3.6;sCharge(b,1/ets)}
+      else if(d<5.5&&Math.abs(TG.y-b.y)<2.6&&b.sl<=0){b.sl=1.5;b.fl=.2;if(!RM)shake=Math.max(shake,.9);nz(.4,.5,'lowpass',400,60,{rev:.6});tone('sine',90,28,.4,.6);
+        ringFx(b.x,b.y,b.z,0xffd9a0,11,.5);hitBy=BT[tp].n+' 내려찍기';if(hurtT(26,b.x,b.z))return}
       else{if(b.gc<=0&&b.ls>2.5&&d<30){b.gc=5;b.rot=Math.atan2(ex,ez);lob(b);lob(b);lob(b)}
-        if(see&&b.pm<=0&&clearLine(b,P.x-ux*1.5,P.z-uz*1.5,b.r)){mvx=ux;mvz=uz;b.rot=Math.atan2(ex,ez)}else pathing=true}
+        if(see&&b.pm<=0&&clearLine(b,TG.x-ux*1.5,TG.z-uz*1.5,b.r)){mvx=ux;mvz=uz;b.rot=Math.atan2(ex,ez)}else pathing=true}
     }else if(MD[tp]||tp==='bomber'){
-      var near=d<(tp==='split'?2.8:2.3)&&Math.abs(P.y-b.y)<1.7;
+      var near=d<(tp==='split'?2.8:2.3)&&Math.abs(TG.y-b.y)<1.7;
       if(tp==='bomber'){ /* 자폭병: 접근할수록 빨라지는 경고음 */
         b.cd-=dt;if(b.cd<=0&&d<24){b.cd=Math.max(.11,d/24*.7);b.fl=.07;sBeep(b)}
         if(near){b.hp=0;killBot(b,b.x,b.y+1,b.z);continue}
       }else if(see&&near){
         b.rot=Math.atan2(ex,ez);b.cd-=dt;
-        if(b.cd<=0){var md=MD[tp];b.cd=md[2];b.fl=.16;sSlash(b);hitBy=BT[tp].n;if(hurtP(Math.min(md[1],md[0]+wave*(tp==='mite'?.2:1)),b.x,b.z))return}
+        if(b.cd<=0){var md=MD[tp];b.cd=md[2];b.fl=.16;sSlash(b);hitBy=BT[tp].n;if(hurtT(Math.min(md[1],md[0]+wave*(tp==='mite'?.2:1)),b.x,b.z))return}
       }
       if(!(see&&near)){
-        if(see&&d<18&&b.pm<=0&&clearLine(b,P.x-ux*.8,P.z-uz*.8,b.r)){mvx=ux;mvz=uz;b.rot=Math.atan2(ex,ez)}
+        if(see&&d<18&&b.pm<=0&&clearLine(b,TG.x-ux*.8,TG.z-uz*.8,b.r)){mvx=ux;mvz=uz;b.rot=Math.atan2(ex,ez)}
         else pathing=true;
       }
     }else if(see&&d<b.rng&&b.pm<=0){
@@ -258,11 +260,11 @@ function update(dt){
       mvx=ux*ap-uz*b.sd*sf;mvz=uz*ap+ux*b.sd*sf;b.rot=Math.atan2(ex,ez);if(tp!=='gren')b.cd-=dt;
       if(bo){ /* 거신 · 종말 군주: 내려찍기 · 어깨 로켓 · 연발 */
         b.rc-=dt;b.sl-=dt;
-        if(d<5.5*sc/2&&b.sl<=0&&Math.abs(P.y-b.y)<2.6){b.sl=1.6;b.fl=.2;if(!RM)shake=Math.max(shake,.9);nz(.4,.5,'lowpass',400,60,{rev:.6});tone('sine',90,28,.4,.6);
-          ringFx(b.x,b.y,b.z,0xffd9a0,12,.5);puff(b.x+ux*2,b.y+.2,b.z+uz*2,24,6,.8,.72,.62,.6);hitBy=BT[tp].n+' 내려찍기';if(hurtP(26,b.x,b.z))return}
+        if(d<5.5*sc/2&&b.sl<=0&&Math.abs(TG.y-b.y)<2.6){b.sl=1.6;b.fl=.2;if(!RM)shake=Math.max(shake,.9);nz(.4,.5,'lowpass',400,60,{rev:.6});tone('sine',90,28,.4,.6);
+          ringFx(b.x,b.y,b.z,0xffd9a0,12,.5);puff(b.x+ux*2,b.y+.2,b.z+uz*2,24,6,.8,.72,.62,.6);hitBy=BT[tp].n+' 내려찍기';if(hurtT(26,b.x,b.z))return}
         if(b.rc<=0){b.rc=tp==='over'?(b.p3?1.7:2.3):2.8;var bc=Math.cos(b.rot),bsn=Math.sin(b.rot),s2;
           for(s2=-1;s2<2;s2+=2){var lx=b.x+(bc*s2*1.45+bsn*.7)*b.sc/2,lz=b.z+(-bsn*s2*1.45+bc*.7)*b.sc/2,ly=b.y+1.98*b.sc,
-              ax=P.x+(Math.random()-.5)*2-lx,ay=P.y+.6-ly,az=P.z+(Math.random()-.5)*2-lz,al2=Math.hypot(ax,ay,az)||1;
+              ax=TG.x+(Math.random()-.5)*2-lx,ay=TG.y+.6-ly,az=TG.z+(Math.random()-.5)*2-lz,al2=Math.hypot(ax,ay,az)||1;
             launch(lx,ly,lz,ax/al2,ay/al2,az/al2,1)}
           var so=sp(b.x,b.z,.4);so.q=1.1;nz(.5,.4*so.att*2,'bandpass',260,2400,so)}
         if(b.cd<=0){b.bn--;var bd=botShot(b,Math.max(.12,.38-d*.006),Math.min(11,5+wave*.25),d);
@@ -301,6 +303,7 @@ function update(dt){
       if(pathing||MD[tp]||tp==='bomber'||tp==='crusher'||b.wig>0){var an=Math.random()*6.28;b.wig=.35;b.wx=Math.cos(an);b.wz=Math.sin(an);b.pm=.8}else{b.sd=-b.sd;b.pm=1}}}
     else b.sk=Math.max(0,b.sk-dt);
   }
+  TG=P;
   dt=rdt;
   for(q=items.length-1;q>=0;q--){
     var it=items[q];it.life-=dt;
@@ -329,7 +332,7 @@ function update(dt){
     if(al===0){wmDone=1;ST.bonus+=15;note('시간 내 섬멸 · 보급 투하');sClear();st('wtm','display','none');
       ['sd','ov','am'].forEach(function(t,n){items.push({g:mkItem(t),type:t,x:P.x+Math.cos(n*2.1)*1.5,y:P.y,z:P.z+Math.sin(n*2.1)*1.5,life:30})})}
     else if(wmT<=0){wmDone=1;note('시간 초과');st('wtm','display','none')}}
-  if(pend<=0&&!(bossB&&bossB.die<=0)&&(al<=(WM==='timed'&&!wmDone?0:2)||waveT>38)){pend=wave?1:.01;if(wave&&!al)sClear()}
+  if(!NET.guest&&pend<=0&&!(bossB&&bossB.die<=0)&&(al<=(WM==='timed'&&!wmDone?0:2)||waveT>38)){pend=wave?1:.01;if(wave&&!al)sClear()}
   if(pend>0){pend-=dt;if(pend<=0){
     if(wave&&wave%2===0&&pkW!==wave){pkW=wave;pend=.05;openPick();return}
     if(wave){P.hp=Math.min(P.mhp,P.hp+10);if(PK.shw)P.sh=Math.min(120,P.sh+PK.shw)}spawnWave()}}
