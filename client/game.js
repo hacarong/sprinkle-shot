@@ -476,8 +476,12 @@ var WP=[
  {n:'소총',mag:24,res:72,max:240,add:48,rate:.105,dmg:34,pel:1,base:.003,sp:.014,af:.65,ads:46,rel:1.1,kick:.014,bl:.22,vol:.2,fq:2200,low:6},
  {n:'산탄총',mag:6,res:18,max:60,add:8,rate:.8,dmg:15,pel:8,base:.055,sp:0,af:.3,ads:58,rel:1.45,kick:.05,bl:.6,vol:.3,fq:900,low:2},
  {n:'저격총',mag:5,res:15,max:40,add:5,rate:1.15,dmg:130,pel:1,base:.045,sp:0,af:1,ads:18,rel:1.7,kick:.06,bl:.8,vol:.32,fq:3400,low:2},
- {n:'로켓런처',mag:1,res:0,max:9,add:0,rate:.7,dmg:0,pel:0,base:0,sp:0,af:0,ads:55,rel:1.35,kick:.08,bl:1,vol:.3,fq:500,low:1,rocket:1}],
- guns=[],flash,CUR=0;
+ {n:'로켓런처',mag:1,res:0,max:9,add:0,rate:.7,dmg:0,pel:0,base:0,sp:0,af:0,ads:55,rel:1.35,kick:.08,bl:1,vol:.3,fq:500,low:1,rocket:1},
+ {n:'화염방사기',mag:100,res:100,max:300,add:60,rate:.05,dmg:7,pel:0,base:0,sp:0,af:0,ads:60,rel:1.8,kick:.0015,bl:.04,vol:.1,fq:800,low:15,flame:1,own:'flame'},
+ {n:'레일건',mag:3,res:6,max:18,add:3,rate:1.3,dmg:240,pel:1,base:.002,sp:0,af:.5,ads:30,rel:2,kick:.07,bl:.9,vol:.3,fq:4000,low:1,rail:1,own:'rail'}],
+ /* 반동 충격량: 후퇴 · 총구 들림 · 좌우 · 기울임 */
+ RC=[[.9,.8,.5,.8],[1.7,2.6,1,1.6],[1.9,3,.8,1.2],[1.5,2.2,1,2],[.1,.08,.2,.3],[1.7,2.8,.6,1]],
+ guns=[],flash,CUR=0,DMAG=[],dmI=0;
 (function(){
   function PH(c,sn){return new T.MeshPhongMaterial({color:c,shininess:sn||60,specular:0x444448})}
   var mcT=tex(function(g){var r=g.createRadialGradient(46,40,3,64,64,74);r.addColorStop(0,'#ffffff');r.addColorStop(.22,'#c4c4ce');r.addColorStop(.55,'#62626c');r.addColorStop(.85,'#26262b');r.addColorStop(1,'#3a3a44');
@@ -608,7 +612,10 @@ var WP=[
   for(q=0;q<guns.length;q++)gScene.add(guns[q].g);
 })();
 function showGun(n){CUR=n;for(var q=0;q<guns.length;q++)guns[q].g.visible=q===n;guns[n].g.add(flash);flash.position.set(0,guns[n].fy,guns[n].fz);hudC=''}
-var CASE=[],caseI=0;
+var CASE=[],caseI=0,caseP=0,shotN=0,flameN=0,kickY=0,melA=0,afT=0,afOn=false,
+    gz=0,gzV=0,gp=0,gpV=0,gyw=0,gyV=0,gr=0,grV=0,gy=0,gyyV=0,swX=0,swY=0,lyaw=0,lpit=0,relA=0;
+function eject(G){var cs=CASE[caseI];caseI=(caseI+1)%CASE.length;cs.m.position.set(G.g.position.x+.05,G.g.position.y+.04,G.g.position.z+.02);cs.m.visible=true;cs.m.scale.setScalar(CUR===1?1.8:CUR===2?1.5:1);
+  cs.vx=.9+Math.random()*.5;cs.vy=.9+Math.random()*.4;cs.vz=.2+Math.random()*.3;cs.l=.45}
 (function(){var m=new T.MeshLambertMaterial({color:0xd9b25a});for(var q=0;q<5;q++){var o=box(.012,.012,.034,m,0,0,0,gScene);o.visible=false;CASE.push({m:o,l:0,vx:0,vy:0,vz:0})}})();
 /* 효과: 입자 · 예광탄 · 탄흔 */
 var softT=tex(function(g){var r=g.createRadialGradient(64,64,2,64,64,62);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(.35,'rgba(255,255,255,.5)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,128,128)});
@@ -1133,8 +1140,8 @@ document.addEventListener('visibilitychange',function(){if(!AC)return;try{if(doc
 
 /* ================= 입력 ================= */
 var K={},firing=false,joyId=null,jx0=0,jy0=0,jx=0,jy=0,lookId=null,lx=0,ly=0,fireId=null,touchAim=false;
-var DEF={fwd:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',fire:'Space',rel:'KeyR',aim:'KeyF',next:'KeyQ',w1:'Digit1',w2:'Digit2',w3:'Digit3',w4:'Digit4',jump:'KeyE',dash:'ShiftLeft',gren:'KeyG',pause:'KeyP',lL:'ArrowLeft',lR:'ArrowRight',lU:'ArrowUp',lD:'ArrowDown'},
-    ANAME={fwd:'전진',back:'후진',left:'좌 이동',right:'우 이동',fire:'사격',rel:'재장전',aim:'정조준',next:'다음 무기',w1:'소총',w2:'산탄총',w3:'저격총',w4:'로켓런처',jump:'점프',dash:'대시',gren:'수류탄',pause:'일시정지',lL:'조준 좌',lR:'조준 우',lU:'조준 상',lD:'조준 하'},
+var DEF={fwd:'KeyW',back:'KeyS',left:'KeyA',right:'KeyD',fire:'Space',rel:'KeyR',aim:'KeyF',next:'KeyQ',w1:'Digit1',w2:'Digit2',w3:'Digit3',w4:'Digit4',w5:'Digit5',w6:'Digit6',alt:'KeyX',melee:'KeyV',jump:'KeyE',dash:'ShiftLeft',gren:'KeyG',pause:'KeyP',lL:'ArrowLeft',lR:'ArrowRight',lU:'ArrowUp',lD:'ArrowDown'},
+    ANAME={fwd:'전진',back:'후진',left:'좌 이동',right:'우 이동',fire:'사격',rel:'재장전',aim:'정조준',next:'다음 무기',w1:'소총',w2:'산탄총',w3:'저격총',w4:'로켓런처',w5:'화염방사기',w6:'레일건',alt:'보조 사격',melee:'근접 공격',jump:'점프',dash:'대시',gren:'수류탄',pause:'일시정지',lL:'조준 좌',lR:'조준 우',lU:'조준 상',lD:'조준 하'},
     BIND={},ACT={},cap=null;
 function mapB(){ACT={};for(var a in BIND)if(BIND[a])ACT[BIND[a]]=a}
 function loadB(){var o={},a;try{o=JSON.parse(localStorage.getItem('botarena3d_keys'))||{}}catch(e){}
@@ -1174,7 +1181,7 @@ addEventListener('keydown',function(e){
   if(e.code==='Escape'&&state==='play'){pause();return}
   var a=ACT[e.code];if(state!=='play'||!a)return;
   K[a]=1;e.preventDefault();if(e.repeat)return;
-  if(a==='jump')jump();else if(a==='dash')dash();else if(a==='gren')throwG();else if(a==='pause')pause();
+  if(a==='alt')altFire();else if(a==='melee')melee();else if(a==='jump')jump();else if(a==='dash')dash();else if(a==='gren')throwG();else if(a==='pause')pause();
   else if(a==='rel')reload();else if(a==='aim'){adsT=!adsT;setAim()}else if(a==='next')cycle(1);
   else if(/^w\d$/.test(a))switchTo(+a.charAt(1)-1);
 });
@@ -1192,7 +1199,7 @@ cv.addEventListener('pointerdown',function(e){
   try{cv.setPointerCapture(e.pointerId)}catch(_){}
   if(e.pointerType==='mouse'){
     if(!locked()){try{var p=cv.requestPointerLock();if(p&&p.catch)p.catch(function(){})}catch(_){}}
-    mouseBtn(e);lookId=e.pointerId;lx=e.clientX;ly=e.clientY;touchAim=false;
+    mouseBtn(e);if(e.button===1)altFire();lookId=e.pointerId;lx=e.clientX;ly=e.clientY;touchAim=false;
   }else{
     document.body.classList.add('touch');touchAim=true;lastTouch=Date.now();
     if(e.clientX<innerWidth/2&&joyId===null){
@@ -1313,22 +1320,32 @@ function shoot(){
   var W=WP[CUR],G=guns[CUR],sp=(W.base+bloom*W.sp)*(1-W.af*adsA),pl,hitAny=false,headAny=false,
       shB=false,accL=[],rx=Math.cos(P.yaw),rz=-Math.sin(P.yaw),ox=P.x,oy=P.y+1.6,oz=P.z,R=touchAim?.75:.44,ext=touchAim?.35:0,
       side=.2*(1-adsA),down=.14-.06*adsA,col=P.pw>0?0xc9a9ee:0xffe2b0;
-  var k0=kick;if(P.ov<=0)P.am[CUR]--;P.cd=W.rate/PK.rate*(P.ov>0?.6:1);recoil=1;flashT=.05;bloom=Math.min(1,bloom+W.bl);if(!RM)kick=Math.min(.12,kick+W.kick*(1-.4*adsA));
-  sShot(CUR);mLight.intensity=2.2;
-  if(!W.rocket){var cs=CASE[caseI];caseI=(caseI+1)%CASE.length;cs.m.position.set(G.g.position.x+.05,G.g.position.y+.04,G.g.position.z+.02);cs.m.visible=true;
+  var k0=kick,ky0=kickY;if(P.ov<=0)P.am[CUR]-=cost;P.cd=W.rate/PK.rate*(P.ov>0?.6:1);recoil=1;flashT=.05;shotN++;
+  /* 총 반동(스프링 충격)과 화면 좌우 반동 */
+  var rc=RC[CUR],rk=(1-.45*adsA)*(alt?1.5:1);gzV+=rc[0]*rk;gpV+=rc[1]*rk;gyV+=(Math.random()-.5)*rc[2]*rk;grV+=(Math.random()-.5)*rc[3]*rk;
+  if(!RM)kickY+=(CUR===0?(shotN%2?1:-1)*.003+(Math.random()-.5)*.004:(Math.random()-.5)*W.kick*.5)*(1-.4*adsA);
+  if(W.rocket){puff(P.x+Math.sin(P.yaw)*1.2,P.y+1.5,P.z+Math.cos(P.yaw)*1.2,14,3,.6,.58,.56,.8,Math.sin(P.yaw)*5,.5,Math.cos(P.yaw)*5)}
+  bloom=Math.min(1,bloom+W.bl);if(!RM)kick=Math.min(.12,kick+W.kick*(1-.4*adsA));
+  sShot(pierce&&CUR===2?5:CUR);mLight.intensity=2.2;
+  if(CUR===1||CUR===2)caseP=1; /* 펌프·볼트 조작 때 배출 */
+  else if(!W.rocket&&!W.rail){var cs=CASE[caseI];caseI=(caseI+1)%CASE.length;cs.m.position.set(G.g.position.x+.05,G.g.position.y+.04,G.g.position.z+.02);cs.m.visible=true;
   cs.vx=.9+Math.random()*.5;cs.vy=.9+Math.random()*.4;cs.vz=.2+Math.random()*.3;cs.l=.45}
-  for(pl=0;pl<W.pel;pl++){
-    var yw=P.yaw+(Math.random()-.5)*2*sp,pt=P.pitch+k0+(Math.random()-.5)*2*sp,cp=Math.cos(pt),
+  for(pl=0;pl<pel;pl++){
+    prc.length=0;
+    var yw=P.yaw+ky0+(Math.random()-.5)*2*sp,pt=P.pitch+k0+(Math.random()-.5)*2*sp,cp=Math.cos(pt),
         dx=-Math.sin(yw)*cp,dy=Math.sin(pt),dz=-Math.cos(yw)*cp,
         wt=ray(ox,oy,oz,dx,dy,dz,90),bt=wt<0?90:wt,hitB=null,head=false,q,b,hl=dx*dx+dz*dz;
     if(hl>1e-5)for(q=0;q<bots.length;q++){
       b=bots[q];if(b.die>0)continue;
       var tt=((b.x-ox)*dx+(b.z-oz)*dz)/hl;if(tt<=0||tt>=bt)continue;
       var hx=ox+dx*tt-b.x,hz=oz+dz*tt-b.z,hy=oy+dy*tt-b.y;
-      var bs=b.sc,br=R*(b.hr||bs);if(hx*hx+hz*hz<br*br&&hy>-ext&&hy<2*bs+ext){hitB=b;bt=tt;head=hy>1.64*bs&&hy<2.08*bs}
+      var bs=b.sc,br=R*(b.hr||bs);if(hx*hx+hz*hz<br*br&&hy>-ext&&hy<2*bs+ext){if(pierce)prc.push([b,tt,hy>1.64*bs&&hy<2.08*bs]);else{hitB=b;bt=tt;head=hy>1.64*bs&&hy<2.08*bs}}
     }
     var ex=ox+dx*bt,ey=oy+dy*bt,ez=oz+dz*bt,blk=false;
-    tracer(ox+rx*side+dx*.9,oy-down+dy*.9,oz+rz*side+dz*.9,ex,ey,ez,col);
+    tracer(ox+rx*side+dx*.9,oy-down+dy*.9,oz+rz*side+dz*.9,ex,ey,ez,pierce?0x9fd8ff:col);
+    if(pierce){tracer(ox+rx*side+dx*.9,oy-down+dy*.9+.03,oz+rz*side+dz*.9,ex,ey+.03,ez,0xffffff);
+      for(q=0;q<prc.length;q++){var pb=prc[q][0],pt2=prc[q][1],ph=prc[q][2];hitAny=true;if(ph)headAny=true;
+        puff(ox+dx*pt2,oy+dy*pt2,oz+dz*pt2,8,3.5,.6,.85,1,.35);dmgBot(pb,W.dmg*PK.dmg*dmul*(ph?2.05:1)*(P.pw>0?2:1),ox+dx*pt2,oy+dy*pt2,oz+dz*pt2,ph,0)}}
     /* 방패병: 정면 몸통 사격은 방패가 막음 */
     if(hitB&&hitB.tp==='shield'&&!head&&dx*Math.sin(hitB.rot)+dz*Math.cos(hitB.rot)<-.35&&ey-hitB.y<1.5*hitB.sc)blk=true;
     if(hitB&&blk){puff(ex,ey,ez,5,3,.7,.85,1,.25);sShieldHit(ex,ez);shB=true}
@@ -1383,7 +1400,11 @@ function update(dt){
   /* 유탄 */
   for(q=grenades.length-1;q>=0;q--){var gn=grenades[q],gd=gn.pl?dt:dt*ets;
     if(!gn.land){gn.vy-=14*gd;var gx2=gn.x+gn.vx*gd,gy2=gn.y+gn.vy*gd,gz2=gn.z+gn.vz*gd;
-      if(solid(gx2,gy2,gz2)){gn.land=1;gn.fuse=.9;var gf=floorAt(gn.x,gn.z,gn.y+.3);gn.r=ring(gn.x,gf<50?gf:gn.y,gn.z,1.05);tone('square',900,900,.05,.08*sp(gn.x,gn.z).att*2,{pan:sp(gn.x,gn.z).pan})}
+      if(gn.imp){for(var gq=0;gq<bots.length;gq++){var gb=bots[gq];if(gb.die<=0&&Math.hypot(gb.x-gx2,gb.z-gz2)<.9*gb.sc&&gy2>gb.y-.2&&gy2<gb.y+2.2*gb.sc){gn.land=1;gn.fuse=0;break}}}
+      if(gn.land){gn.x=gx2;gn.y=gy2;gn.z=gz2}
+      else if(solid(gx2,gy2,gz2)){gn.land=1;
+        if(gn.imp)gn.fuse=0;
+        else{gn.fuse=.9;var gf=floorAt(gn.x,gn.z,gn.y+.3);gn.r=ring(gn.x,gf<50?gf:gn.y,gn.z,1.05);tone('square',900,900,.05,.08*sp(gn.x,gn.z).att*2,{pan:sp(gn.x,gn.z).pan})}}
       else{gn.x=gx2;gn.y=gy2;gn.z=gz2}}
     else{gn.fuse-=gd;if(gn.r)gn.r.material.opacity=.35+.35*Math.abs(Math.sin(gn.fuse*14))}
     gn.m.position.set(gn.x,gn.y,gn.z);gn.m.rotation.x+=gd*9;
@@ -1721,7 +1742,7 @@ function hud(){
   var pw=P.pw>0?Math.ceil(P.pw):0,dn=drones.length,vp=P.vp>0?Math.ceil(P.vp):0,sl=slowT>0?Math.ceil(slowT):0,ov=P.ov>0?Math.ceil(P.ov):0,s=P.gr+'|'+(P.dc>0)+'|'+P.mhp+'|'+vp+'|'+P.sh+'|'+sl+'|'+ov+'|'+P.hp+'|'+CUR+'|'+P.am[CUR]+'|'+P.rs[CUR]+'|'+wave+'|'+kills+'|'+(P.rel>0)+'|'+pw+'|'+dn;
   if(s!==hudC){hudC=s;$('hp').textContent=P.hp;$('hpb').style.width=Math.max(0,P.hp/P.mhp*100)+'%';$('wn').textContent=WP[CUR].n;$('am').textContent=P.am[CUR]+' / '+P.rs[CUR];
     $('wv').textContent=Math.max(1,wave);$('kl').textContent=kills;
-    var tx=[];if(P.rel>0)tx.push('재장전 중');else if(P.am[CUR]<WP[CUR].low)tx.push('탄약 부족');if(pw)tx.push('강화탄 '+pw+'초');if(dn)tx.push('드론 '+dn+'기');if(P.sh>0)tx.push('방어막 '+P.sh);if(vp)tx.push('흡혈 '+vp+'초');if(sl)tx.push('감속 '+sl+'초');if(ov)tx.push('과열 '+ov+'초');tx.push('수류탄 '+P.gr);if(P.dc>0)tx.push('대시 대기');
+    var tx=[];if(P.rel>0)tx.push('재장전 중');else if(P.am[CUR]<WP[CUR].low)tx.push('탄약 부족');if(pw)tx.push('강화탄 '+pw+'초');if(dn)tx.push('드론 '+dn+'기');if(P.sh>0)tx.push('방어막 '+P.sh);if(vp)tx.push('흡혈 '+vp+'초');if(sl)tx.push('감속 '+sl+'초');if(ov)tx.push('과열 '+ov+'초');tx.push('수류탄 '+P.gr);if(CUR===0&&P.ac<=0)tx.push('유탄 준비');if(P.dc>0)tx.push('대시 대기');
     $('rl').textContent=tx.join(' · ')||'\u00a0'}
   st('hurt','opacity',hurt>0?(hurt*.8).toFixed(2):'0');
   if(CFG.mini&&tNow-mmT>.1){mmT=tNow;drawMini()}
