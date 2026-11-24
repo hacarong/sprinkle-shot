@@ -786,8 +786,10 @@ function beam(m,ax,ay,az,bx,by,bz,th){v1.set(ax,ay,az);v2.set(bx,by,bz);m.positi
 function dmgBot(b,amt,x,y,z,head,src,noNum){
   if(b.die>0||b.im>0)return false;
   if(b.inv){puff(x,y,z,4,3,.8,.7,1,.25);sShieldHit(x,z);if(tNow-invN>1.6){invN=tNow;note('무적 · 동력 첨탑 파괴')}return false}
-  b.hp-=amt;b.hit=.1;if(!noNum)dmgNum(x,y+.3,z,amt,head);
-  if(P.vp>0){vpA+=amt*.12;if(vpA>=1){var h=vpA|0;vpA-=h;P.hp=Math.min(P.mhp,P.hp+h)}}
+  if(PK.exec&&b.hp<b.mhp*.3)amt*=1.4;
+  b.hp-=amt;if(noNum!==2)b.hit=.1;if(!noNum)dmgNum(x,y+.3,z,amt,head);
+  var lr=(P.vp>0?.12:0)+PK.leech;
+  if(lr){vpA+=amt*lr;if(vpA>=1){var h=vpA|0;vpA-=h;P.hp=Math.min(P.mhp,P.hp+h)}}
   if(b.hp<=0){killBot(b,x,y,z,src===1);return true}return false;
 }
 function fx2(dt){
@@ -872,6 +874,7 @@ function killBot(b,ex,ey,ez,gib){
   }else if(tp!=='mite'||Math.random()<.15)drop(b);
 }
 function hurtP(dmg,sx,sz){
+  if(P.ds>0&&PK.phase)return false; /* 위상 대시 */
   dmg=Math.round(dmg*DFD[CFG.diff]);if(dmg<=0)return false;
   if(sx!==undefined){dirA=Math.atan2((sx-P.x)*Math.cos(P.yaw)-(sz-P.z)*Math.sin(P.yaw),-(sx-P.x)*Math.sin(P.yaw)-(sz-P.z)*Math.cos(P.yaw));dirT=1}
   if(P.sh>0){var ab=Math.min(P.sh,dmg);P.sh-=ab;dmg-=ab;sHurt(1);if(dmg<=0){hurt=Math.max(hurt,.3);return false}}
@@ -890,7 +893,7 @@ function explodeFx(x,y,z,k){
 }
 /* 폭발 주체: 0 플레이어(적 + 자신) · 1 적(플레이어만) · 2 중립(모두) · 3 공습(적만) */
 function explode(x,y,z,en){
-  var q,b,d,c,l;explodeFx(x,y,z,en===1?.75:en===3?1.1:en===4?.8:1);ringFx(x,y-.4,z,0xffd9a0,9,.45);
+  var q,b,d,c,l;explodeFx(x,y,z,en===1?.75:en===3?1.1:en===4?.8:en===5?.5:1);ringFx(x,y-.4,z,0xffd9a0,9,.45);
   if(en===4)return;
   for(q=0;q<COV.length;q++){c=COV[q];if(c.kind===2&&!c.dead&&!c.fz&&Math.hypot((c.x0+c.x1)/2-x,(c.z0+c.z1)/2-z)<5.2&&Math.abs(c.b-y)<3){c.fz=1;booms.push({t:.14+Math.random()*.2,bar:c})}}
   if(en!==1){l=bots.slice();for(q=0;q<l.length;q++){b=l[q];if(b.die>0)continue;d=Math.hypot(b.x-x,b.y+b.sc-y,b.z-z)-(b.boss?1:0);
@@ -1289,7 +1292,14 @@ var PERKS=[
   ['드론 개조','드론·포탑 체력과 화력 +30%',function(){PK.dr*=1.3;for(var q=0;q<drones.length;q++){drones[q].mhp*=1.3;drones[q].hp*=1.3}}],
   ['보급 방어막','웨이브 시작마다 방어막 +20',function(){PK.shw+=20;P.sh=Math.min(120,P.sh+20)}],
   ['폭파병','수류탄 최대 +2, 즉시 2개 보급',function(){PK.grx+=2;P.gr+=2}],
-  ['추진기','대시 재사용 대기 30% 단축',function(){PK.dash*=.7}]],pkW=0,pkOpt=[];
+  ['추진기','대시 재사용 대기 30% 단축',function(){PK.dash*=.7}],
+  ['연쇄 폭발','처치 시 35% 확률로 소형 폭발',function(){PK.boom=1},'boom'],
+  ['위상 대시','대시 중 무적, 스친 적에게 피해 45',function(){PK.phase=1},'phase'],
+  ['정밀 회수','헤드샷 명중 시 탄약 1발 반환',function(){PK.refund=1},'refund'],
+  ['흡혈 탄환','준 피해의 3%만큼 체력 회복',function(){PK.leech+=.03}],
+  ['마지막 탄','탄창의 마지막 3발 피해 +60%',function(){PK.last=1},'last'],
+  ['집속탄','수류탄 폭발 뒤 소형 폭발 3회',function(){PK.cluster=1},'cluster'],
+  ['처형자','체력 30% 이하인 적에게 피해 +40%',function(){PK.exec=1},'exec']],pkW=0,pkOpt=[];
 function openPick(){
   state='pick';firing=false;rmb=false;K={};joyId=lookId=null;jx=jy=0;$('joy').style.display='none';
   try{if(document.exitPointerLock)document.exitPointerLock()}catch(e){}
