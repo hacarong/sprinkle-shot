@@ -1212,7 +1212,10 @@ function switchTo(n){if(state!=='play'||n===CUR||swT>0)return;if(n>=WP.length)re
 function look(dx,dy,s){s*=cam.fov/BF*CFG.sens;P.yaw-=dx*s;P.pitch=Math.max(-1.3,Math.min(1.3,P.pitch-dy*s))}
 addEventListener('keydown',function(e){
   if(cap)return;
-  if(state==='pick'){var n=e.code==='Digit1'||e.code==='Numpad1'?0:e.code==='Digit2'||e.code==='Numpad2'?1:e.code==='Digit3'||e.code==='Numpad3'?2:-1;if(n>=0){e.preventDefault();choose(n)}return}
+  if(state==='pick'){var n=e.code==='Digit1'||e.code==='Numpad1'?0:e.code==='Digit2'||e.code==='Numpad2'?1:e.code==='Digit3'||e.code==='Numpad3'?2:-1;if(n>=0){e.preventDefault();choose(n)}
+    else if(/^Arrow/.test(e.code)){var cs=$('pkl').children,ci=Array.prototype.indexOf.call(cs,document.activeElement),d=e.code==='ArrowLeft'||e.code==='ArrowUp'?-1:1;
+      e.preventDefault();cs[(Math.max(0,ci)+d+cs.length)%cs.length].focus()}
+    return}
   if(e.code==='Escape'&&state==='play'){pause();return}
   var a=ACT[e.code];if(state!=='play'||!a)return;
   K[a]=1;e.preventDefault();if(e.repeat)return;
@@ -1372,21 +1375,46 @@ function relock(){
   /* 브라우저가 거부한 경우(Esc 직후 등) 안내 */
   setTimeout(function(){if(state==='play'&&!locked()&&!touchAim)note('화면을 클릭하면 조준 재개')},350);
 }
+var PCAT={'화력 증폭':0,'속사 기구':0,'빠른 손':0,'확장 탄창':0,'강화 장갑':1,'보급 방어막':1,'경량 장비':2,'추진기':2,'드론 개조':3,'폭파병':3},
+    PCN=['공격','방어','기동','지원','조합'],
+    PCI=['<circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>',
+      '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>',
+      '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+      '<rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V4M9 13v2M15 13v2M2 13h3M19 13h3"/>',
+      '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/><circle cx="12" cy="12" r="2"/>'],
+    pkAt=0,pkRe=0;
+function drawPick(){
+  var owned={},box=$('pkl'),q;ST.perks.forEach(function(n){owned[n]=(owned[n]||0)+1});
+  var pool=PERKS.filter(function(p){return (!p[3]||!PK[p[3]])&&pkOpt.indexOf(p)<0});
+  if(pool.length<3)pool=PERKS.filter(function(p){return !p[3]||!PK[p[3]]});
+  pkOpt=[];box.textContent='';
+  for(q=0;q<3;q++)pkOpt.push(pool.splice(Math.random()*pool.length|0,1)[0]);
+  pkOpt.forEach(function(p,n){
+    var c=PCAT[p[0]]===undefined?4:PCAT[p[0]],b=document.createElement('button'),own=owned[p[0]]||0;
+    b.type='button';b.className='pkb';
+    b.innerHTML='<span class="pkk" aria-hidden="true">'+(n+1)+'</span><svg class="pki" viewBox="0 0 24 24" aria-hidden="true">'+PCI[c]+'</svg><span class="pkc"></span><b></b><span class="pkd"></span><span class="pko"></span>';
+    b.querySelector('.pkc').textContent=PCN[c];b.querySelector('b').textContent=p[0];b.querySelector('.pkd').textContent=p[1];
+    b.querySelector('.pko').textContent=own?'보유 '+own:'신규';
+    b.setAttribute('aria-label',(n+1)+'번, '+PCN[c]+', '+p[0]+', '+p[1]+', '+(own?'보유 '+own:'신규'));
+    b.addEventListener('click',function(){choose(n)});box.appendChild(b)});
+  var r=$('pkr');r.disabled=!pkRe;r.textContent=pkRe?'다시 뽑기 (1회)':'다시 뽑기 사용함';
+}
 function openPick(){
   state='pick';firing=false;rmb=false;K={};joyId=lookId=null;jx=jy=0;$('joy').style.display='none';
   try{if(document.exitPointerLock)document.exitPointerLock()}catch(e){}
-  var pool=PERKS.filter(function(p){return !p[3]||!PK[p[3]]}),box=$('pkl'),q;pkOpt=[];box.textContent='';
-  for(q=0;q<3;q++)pkOpt.push(pool.splice(Math.random()*pool.length|0,1)[0]);
-  pkOpt.forEach(function(p,n){
-    var b=document.createElement('button'),t=document.createElement('b'),d=document.createElement('span');
-    b.type='button';b.className='pkb';t.textContent=(n+1)+'. '+p[0];d.textContent=p[1];b.appendChild(t);b.appendChild(d);
-    b.addEventListener('click',function(){choose(n)});box.appendChild(b)});
-  $('pk').hidden=false;box.firstChild.focus();sPick('pw');
+  pkOpt=[];pkRe=1;pkAt=performance.now();drawPick();$('msg').textContent='';msgT=0;
+  $('pks').textContent=(wave?'웨이브 '+wave+' 완료':'출전 준비')+' · 강화 '+ST.perks.length+'개 보유';
+  $('pk').hidden=false;$('pk').classList.remove('rdy');setTimeout(function(){$('pk').classList.add('rdy')},450);
+  $('pkl').firstChild.focus();sPick('pw');
 }
 function choose(n){
   if(state!=='pick'||!pkOpt[n])return;
-  pkOpt[n][2]();note(pkOpt[n][0]);ST.perks.push(pkOpt[n][0]);var pc=lsGet('ss_perk',{});pc[pkOpt[n][0]]=(pc[pkOpt[n][0]]||0)+1;lsSet('ss_perk',pc);$('pk').hidden=true;state='play';acc=0;hudC='';sPick('sd');try{cv.focus()}catch(e){}relock();
+  if(performance.now()-pkAt<450)return; /* 사격 중 열리자마자 눌리는 오선택 방지 */
+  pkOpt[n][2]();note(pkOpt[n][0]);ST.perks.push(pkOpt[n][0]);var pc=lsGet('ss_perk',{});pc[pkOpt[n][0]]=(pc[pkOpt[n][0]]||0)+1;lsSet('ss_perk',pc);
+  $('pk').hidden=true;state='play';acc=0;hudC='';sPick('sd');try{cv.focus()}catch(e){}
+  relock();
 }
+$('pkr').addEventListener('click',function(){if(state!=='pick'||!pkRe)return;pkRe=0;drawPick();$('pkl').firstChild.focus();sPick('am')});
 
 /* ================= 갱신 ================= */
 function drop(b){

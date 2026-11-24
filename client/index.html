@@ -41,11 +41,15 @@
   <button class="tb" id="fire" aria-label="사격">사격</button>
 </div>
 <button class="tb" id="pz" aria-label="일시정지">Ⅱ</button>
-<div id="pk" hidden role="dialog" aria-modal="true" aria-labelledby="pkt">
-  <div class="card">
+<div id="pk" hidden role="dialog" aria-modal="true" aria-labelledby="pkt" aria-describedby="pks">
+  <div class="pkw">
     <h2 id="pkt">강화 선택</h2>
-    <p class="sub">셋 중 하나 선택 · 숫자 키 1·2·3</p>
-    <div id="pkl"></div>
+    <p class="sub" id="pks"></p>
+    <div id="pkl" role="group" aria-label="강화 후보"></div>
+    <div class="pkf">
+      <button class="b o" id="pkr">다시 뽑기 (1회)</button>
+      <p class="kh">숫자 키 1·2·3 · 방향키로 이동 후 Enter</p>
+    </div>
   </div>
 </div>
 <div id="ov">
