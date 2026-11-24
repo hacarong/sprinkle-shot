@@ -1335,7 +1335,8 @@ function update(dt){
   if(P.ds>0){P.ds-=dt;move(P,P.dvx*24*dt,P.dvz*24*dt,.3)}
   if(P.vy>0&&solid(P.x,P.y+1.85,P.z))P.vy=0; /* 머리 위 충돌 */
   grav(P,dt,.3);
-  upd2(dt);
+  if(P.air&&P.vy===0){P.air=0;gyyV-=.55;gpV-=.8;sStep(P.y>2)} /* 착지 */
+  upd2(dt);tipTick(dt);
   stepD+=Math.hypot(P.x-psx,P.z-psz);if(stepD>2.3&&P.vy===0){stepD=0;sStep(P.y>2)}
   if(P.ov>0)P.ov-=dt;if(comboT>0)comboT-=dt;
   if(slowT>0){slowT-=dt;if(slowT<=0)sSlow(0)}ets=slowT>0?.3:1;
