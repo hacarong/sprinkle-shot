@@ -1344,7 +1344,7 @@ function pause(){
   $('ttl').textContent='일시정지';$('subt').textContent=MDEF.name+' · 웨이브 '+Math.max(1,wave)+' · 처치 '+kills;
   $('res').hidden=true;$('go').textContent='계속';$('rst').hidden=false;$('ov').hidden=false;$('go').focus();
 }
-function resume(){if(state!=='pause')return;state='play';$('ov').hidden=true;$('rst').hidden=true;acc=0;try{cv.focus()}catch(e){}}
+function resume(){if(state!=='pause')return;state='play';$('ov').hidden=true;$('rst').hidden=true;acc=0;try{cv.focus()}catch(e){}relock()}
 /* 강화 선택: 2웨이브마다 3개 중 1개 */
 var PERKS=[
   ['화력 증폭','모든 무기와 로켓 피해 +15%',function(){PK.dmg*=1.15}],
@@ -1364,6 +1364,14 @@ var PERKS=[
   ['마지막 탄','탄창의 마지막 3발 피해 +60%',function(){PK.last=1},'last'],
   ['집속탄','수류탄 폭발 뒤 소형 폭발 3회',function(){PK.cluster=1},'cluster'],
   ['처형자','체력 30% 이하인 적에게 피해 +40%',function(){PK.exec=1},'exec']],pkW=0,pkOpt=[];
+/* 마우스 조준 복귀: 버튼 클릭이나 키 입력 직후 포인터 잠금을 다시 요청 */
+function relock(){
+  if(touchAim||locked())return;
+  if(window.matchMedia&&!matchMedia('(pointer:fine)').matches)return;
+  try{var p=cv.requestPointerLock();if(p&&p.catch)p.catch(function(){})}catch(e){}
+  /* 브라우저가 거부한 경우(Esc 직후 등) 안내 */
+  setTimeout(function(){if(state==='play'&&!locked()&&!touchAim)note('화면을 클릭하면 조준 재개')},350);
+}
 function openPick(){
   state='pick';firing=false;rmb=false;K={};joyId=lookId=null;jx=jy=0;$('joy').style.display='none';
   try{if(document.exitPointerLock)document.exitPointerLock()}catch(e){}
@@ -1377,7 +1385,7 @@ function openPick(){
 }
 function choose(n){
   if(state!=='pick'||!pkOpt[n])return;
-  pkOpt[n][2]();note(pkOpt[n][0]);ST.perks.push(pkOpt[n][0]);var pc=lsGet('ss_perk',{});pc[pkOpt[n][0]]=(pc[pkOpt[n][0]]||0)+1;lsSet('ss_perk',pc);$('pk').hidden=true;state='play';acc=0;hudC='';sPick('sd');try{cv.focus()}catch(e){}
+  pkOpt[n][2]();note(pkOpt[n][0]);ST.perks.push(pkOpt[n][0]);var pc=lsGet('ss_perk',{});pc[pkOpt[n][0]]=(pc[pkOpt[n][0]]||0)+1;lsSet('ss_perk',pc);$('pk').hidden=true;state='play';acc=0;hudC='';sPick('sd');try{cv.focus()}catch(e){}relock();
 }
 
 /* ================= 갱신 ================= */
@@ -1887,7 +1895,7 @@ function start(){
   TIPS=document.body.classList.contains('touch')?['왼쪽 화면을 드래그해 이동','오른쪽 화면을 드래그해 조준','사격 버튼을 누른 채 드래그하면 조준 유지','장전 · 무기 · 조준 버튼은 이동 중에도 동작','점프로 낮은 상자에 오르고, 대시로 위험에서 이탈']
     :['WASD로 이동, 화면을 클릭해 마우스 조준','좌클릭 사격 · 우클릭 정조준 · R 재장전','E 점프 · 왼쪽 Shift 대시 · G 수류탄','X 보조 사격 · V 근접 공격 · 1~6 무기 교체','P 또는 Esc로 일시정지와 설정'];
   try{cv.focus()}catch(e){}
-  if(o.perk)openPick();
+  if(o.perk)openPick();else relock();
 }
 /* 런 종료 정산: 스프링클 적립과 기록 저장 */
 function bank(){
