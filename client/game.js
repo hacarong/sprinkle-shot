@@ -416,6 +416,19 @@ function mkPylon(){
   var lz=new T.Mesh(trG,mBeam);lz.visible=false;lz.frustumCulled=false;scene.add(lz);
   scene.add(g);return {g:g,cr:cr,fl:{visible:false},sh:{visible:false},mat:mat,lz:lz};
 }
+/* 먼 거리용: 같은 형태를 하나의 지오메트리로 합친 정지 모델(드로콜 1회) */
+var BFAR={};
+function farGeo(tp,root,mat){
+  if(BFAR[tp])return BFAR[tp];
+  var acc=new Acc();root.updateMatrixWorld(true);
+  root.traverse(function(o){
+    if(!o.isMesh||o.material!==mat)return;
+    var g=o.geometry.clone();g.applyMatrix4(o.matrixWorld);
+    var A=g.attributes.position.array,N=g.attributes.normal.array,C=g.attributes.color.array,q;
+    for(q=0;q<A.length;q++){acc.p.push(A[q]);acc.n.push(N[q]);acc.c.push(C[q])}
+    g.dispose()});
+  return BFAR[tp]=finG(acc);
+}
 function mkBot(tp){
   var c=BT[tp];if(c.fly)return mkFlyer(tp);if(tp==='pylon')return mkPylon();
   var kd=c.geo||tp,G=botGeo(tp),g=new T.Group(),u=new T.Group(),up=new T.Group(),big=kd==='heavy'||kd==='boss',o,halo=null;
@@ -448,6 +461,7 @@ function mkBot(tp){
   if(tp==='crusher'){box(.5,.08,.04,mCore,0,.47,.2,up);box(.08,.3,.04,mCore,0,.47,.2,up)}
   var bs=new T.Mesh(gShadow,mShadow);bs.rotation.x=-Math.PI/2;bs.position.y=.03;u.add(bs);
   var lz=null;if(tp==='sniper'||tp==='crusher'||tp==='medic'){lz=new T.Mesh(trG,tp==='medic'?mHeal:mLaser);lz.visible=false;lz.frustumCulled=false;scene.add(lz)}
+  var fm=new T.Mesh(farGeo(tp,g,mat),mat);fm.visible=false;g.add(fm);
   scene.add(g);
   return {g:g,u:u,far:fm,up:up,head:head,thL:L[0],knL:L[1],thR:R[0],knR:R[1],aL:aL,aR:aR,fl:fl,sh:bs,mat:mat,lz:lz,halo:halo,cm:cm,nr:true};
 }
@@ -1747,8 +1761,10 @@ function sync(){
   for(q=0;q<bots.length;q++){
     b=bots[q];m=b.m;ip(b);m.g.position.set(IX,IY,IZ);m.g.rotation.y=b.rot;m.sh.visible=!SHD&&b.die<=0;
     /* 먼 적은 그림자 생략 */
-    if(m.cm){var nr=Math.abs(b.x-P.x)+Math.abs(b.z-P.z)<45;if(nr!==m.nr){m.nr=nr;for(var cq=0;cq<m.cm.length;cq++)m.cm[cq].castShadow=nr}}
-    m.mat.emissive.setHex(b.hit>0?0x8a8a8a:b.frz>0?0x2a5a9a:b.inv?0x5a3a8a:b.el?0x3a1f52:b.tp==='pylon'?0x2a1a44:0);
+    var md1=Math.abs(b.x-P.x)+Math.abs(b.z-P.z);
+    if(m.far){var fr=md1>46&&b.die<=0&&!b.boss;if(fr!==m.fv){m.fv=fr;m.far.visible=fr;m.u.visible=!fr}}
+    if(m.cm){var nr=md1<45;if(nr!==m.nr){m.nr=nr;for(var cq=0;cq<m.cm.length;cq++)m.cm[cq].castShadow=nr}}
+    m.mat.emissive.setHex(b.hit>0?0x8a8a8a:b.frz>0?0x2a5a9a:b.inv?0x5a3a8a:b.burn>0?0x5a2408:b.el?0x3a1f52:b.tp==='pylon'?0x2a1a44:HLC[CFG.hl]);
     if(b.tp==='stalker'){var vis=b.die>0||b.hit>0||b.fl>0||b.frz>0||Math.hypot(P.x-b.x,P.z-b.z)<6.5?.95:.06;m.mat.opacity+=(vis-m.mat.opacity)*Math.min(1,fdt*9)}
     if(b.die>0){var p=Math.min(1,(1.3-b.die)/.35);m.g.rotation.x=-p*p*1.5;if(b.die<.4)m.g.position.y=b.y-(.4-b.die)*1.2*b.sc;m.fl.visible=false;if(m.lz)m.lz.visible=false}
     else if(b.tp==='pylon'){m.cr.rotation.y=tNow*1.5;m.cr.position.y=1.9+Math.sin(tNow*2+q)*.12;
