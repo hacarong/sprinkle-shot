@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { WebSocketServer } from 'ws';
 import { Rooms } from './rooms.js';
+import { bundle } from './bundle.js';
 
 const ROOT = fileURLToPath(new URL('../client/', import.meta.url));
 const MIME = {
@@ -28,7 +29,9 @@ function loadStatic(dir) {
   (function walk(d) {
     for (const name of readdirSync(d)) {
       const p = join(d, name);
-      if (statSync(p).isDirectory()) walk(p);
+      if (statSync(p).isDirectory()) {
+        if (relative(dir, p) !== 'src') walk(p); // 소스는 묶음(game.js)으로만 제공
+      }
       else {
         const type = MIME[extname(p)] ?? 'application/octet-stream';
         const body = readFileSync(p);
@@ -37,6 +40,8 @@ function loadStatic(dir) {
       }
     }
   })(dir);
+  const game = Buffer.from(bundle());
+  files.set('/game.js', { type: MIME['.js'], body: game, gz: gzipSync(game) });
   return files;
 }
 
