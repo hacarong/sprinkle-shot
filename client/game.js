@@ -1200,10 +1200,15 @@ function fUp(){firing=false;fireId=null;FB.classList.remove('on')}
 FB.addEventListener('pointerup',fUp);FB.addEventListener('pointercancel',fUp);
 FB.addEventListener('keydown',function(e){if(e.code==='Enter')firing=true});
 FB.addEventListener('keyup',function(e){if(e.code==='Enter')firing=false});
-$('rel').addEventListener('click',function(){reload()});
-$('aim').addEventListener('click',function(){if(state==='play'){adsT=!adsT;setAim()}});
-$('wpn').addEventListener('click',function(){cycle(1)});
-$('jmp').addEventListener('click',jump);$('dsh').addEventListener('click',dash);$('grn').addEventListener('click',throwG);$('pz').addEventListener('click',pause);
+/* 터치 버튼은 pointerdown에서 바로 실행합니다. click은 한 손가락이 이미 화면에 닿아 있으면 발생하지 않습니다.
+   키보드로 누른 경우(detail 0)만 click으로 처리합니다. */
+function tap(id,fn){
+  var e=$(id);
+  e.addEventListener('pointerdown',function(ev){ev.preventDefault();ev.stopPropagation();lastTouch=Date.now();fn()});
+  e.addEventListener('click',function(ev){if(ev.detail===0)fn()});
+}
+tap('rel',function(){reload()});tap('aim',function(){if(state==='play'){adsT=!adsT;setAim()}});tap('wpn',function(){cycle(1)});
+tap('jmp',jump);tap('dsh',dash);tap('grn',throwG);tap('alt',altFire);tap('pz',pause);
 cv.addEventListener('wheel',function(e){cycle(e.deltaY>0?1:-1)},{passive:true});
 if(window.matchMedia&&matchMedia('(pointer:coarse)').matches)document.body.classList.add('touch');
 
