@@ -1562,7 +1562,7 @@ function update(dt){
       for(q=0;q<bots.length;q++){b=bots[q];if(b.die>0||b.inv)continue;dd=Math.hypot(b.x-dr.x,b.z-dr.z);
         if(dd<td&&los(dr.x,dr.y+oy0,dr.z,b.x,b.y+(b.fly?.5:1.2*b.sc),b.z)){td=dd;tb=b}}
       if(tb){var ty1=tb.y+(tb.fly?.5:1.2*tb.sc);dr.cd=dr.tur?.2:.42;dr.yaw=Math.atan2(tb.x-dr.x,tb.z-dr.z);sDrone(dr.x,dr.z);
-        tracer(dr.x,dr.y+oy0-.05,dr.z,tb.x,ty1,tb.z,0xc9a9ee);puff(tb.x,ty1,tb.z,3,2.5,.78,.62,.9,.3);dmgBot(tb,(dr.tur?14:12)*PK.dr,tb.x,ty1,tb.z,false,0,true)}
+        tracer(dr.x,dr.y+oy0-.05,dr.z,tb.x,ty1,tb.z,0xc9a9ee);puff(tb.x,ty1,tb.z,3,2.5,.78,.62,.9,.3);KW=dr.tur?'포탑':'드론';dmgBot(tb,(dr.tur?14:12)*PK.dr,tb.x,ty1,tb.z,false,0,true)}
       else dr.cd=.15;
     }
   }
