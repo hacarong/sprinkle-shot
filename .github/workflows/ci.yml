@@ -1,0 +1,46 @@
+name: CI
+
+# Railway의 "Wait for CI"는 push 트리거가 있는 워크플로를 기준으로 동작합니다.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: 문법 검사와 테스트
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  image:
+    name: 컨테이너 빌드와 헬스체크
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t sprinkle-shot:ci .
+      - name: 컨테이너 실행 후 헬스체크
+        run: |
+          docker run -d --name app -e PORT=8080 -p 8080:8080 sprinkle-shot:ci
+          for i in $(seq 1 20); do
+            if curl -fsS http://localhost:8080/healthz; then exit 0; fi
+            sleep 1
+          done
+          docker logs app
+          exit 1

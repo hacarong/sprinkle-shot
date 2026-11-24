@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>봇 아레나</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c" tabindex="-1" role="img" aria-label="1인칭 전투 화면"></canvas>
+<div id="hud" aria-hidden="true">
+  <div>체력<b id="hp">100</b><span id="bar"><i id="hpb"></i></span></div>
+  <div class="mid">웨이브 <span id="wv">1</span><b id="kl">0</b>처치</div>
+  <div class="r"><span id="wn">소총</span><b id="am">24</b><span id="rl">&nbsp;</span></div>
+</div>
+<div id="ch" aria-hidden="true"><i></i><i></i><i></i><i></i><span id="hm"></span></div>
+<div id="msg" role="status" aria-live="polite"></div>
+<div id="note" aria-live="polite"></div>
+<div id="scope"></div>
+<div id="slow"></div>
+<div id="boom"></div>
+<div id="hurt"></div>
+<div id="dir" aria-hidden="true"><i></i></div>
+<div id="boss" hidden><span id="bn">거신</span><span id="bb"><i id="bbi"></i></span></div>
+<div id="joy"><i id="knob"></i></div>
+<button class="tb" id="rel" aria-label="재장전">장전</button>
+<button class="tb" id="wpn" aria-label="무기 교체">무기</button>
+<button class="tb" id="aim" aria-label="정조준" aria-pressed="false">조준</button>
+<button class="tb" id="fire" aria-label="사격">사격</button>
+<div id="ov">
+  <div class="card">
+    <h1 id="ttl">봇 아레나</h1>
+    <p class="sub" id="subt">인페르노풍 복층 맵의 웨이브 생존전</p>
+    <p id="res" hidden></p>
+    <ul id="help">
+      <li>터치: 왼쪽 드래그 이동 · 오른쪽 드래그 조준 · 사격 버튼</li>
+      <li>키보드: WASD 이동 · 방향키 조준 · Space 사격 · R 재장전 (키 설정에서 변경)</li>
+      <li>마우스: 화면 클릭 후 조준 · 클릭 사격</li>
+      <li>무기: 1·2·3 · Q · 휠 교체 · 우클릭(누름) 또는 F 정조준</li>
+      <li>아이템: 체력 · 탄약 · 강화탄 · 로켓(4번 무기) · 지원 드론(누적 최대 4기)</li>
+      <li>적: 보병 · 돌격병 · 자폭병 · 저격병 · 방패병 · 말벌 드론 · 은신병 · 중장갑병 · 유탄병 · 치유병 · 분열체</li>
+      <li>특수: 시간 감속 · 방어막 · 공습 · 과열 · 자동 포탑 · 흡혈 · 빙결 파동 · 전멸 폭탄</li>
+      <li>기믹: 점프 패드(2층 진입) · 순간이동문 2쌍 · 폭발 드럼통 · 드론은 체력이 있고 파괴됨(최대 12기)</li>
+      <li>보스: 10웨이브마다 거신 → 모선 → 분쇄자 순환 · 25웨이브마다 슈퍼 보스</li>
+      <li>낮은 엄폐물 뒤는 피격 차단 · 머리 명중 2배 피해</li>
+    </ul>
+    <label class="sel" for="sw">시작 웨이브
+      <select id="sw"><option value="1">1</option><option value="5">5</option><option value="10">10 · 보스</option><option value="15">15</option><option value="20">20 · 보스</option><option value="25">25 · 슈퍼 보스</option><option value="30">30 · 보스</option></select>
+    </label>
+    <div class="row">
+      <button class="b" id="go">시작</button>
+      <button class="b o" id="snd" aria-pressed="true">소리 켬</button>
+      <button class="b o" id="shd" aria-pressed="true">그림자 켬</button>
+      <button class="b o" id="hq" aria-pressed="true">고급 효과 켬</button>
+      <button class="b o" id="kbtn" aria-expanded="false">키 설정</button>
+    </div>
+    <div id="keys" hidden>
+      <p class="kh">항목 선택 후 원하는 키 입력 · Esc 취소</p>
+      <div id="klist"></div>
+      <button class="b o" id="kdef">기본값 복원</button>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "sprinkle-shot",
+  "version": "0.2.0",
+  "private": true,
+  "description": "봇과 대전하는 1인칭 웹 FPS. 정적 클라이언트와 멀티 준비용 WebSocket 서버.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "lint": "node scripts/check.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

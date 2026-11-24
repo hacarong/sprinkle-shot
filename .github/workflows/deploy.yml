@@ -1,0 +1,28 @@
+name: Deploy (수동 예비 경로)
+
+# 기본 배포는 Railway의 GitHub 자동 배포 + "Wait for CI"입니다.
+# 자동 배포가 동작하지 않을 때만 Actions 탭에서 수동으로 실행합니다.
+# 필요한 설정: 저장소 시크릿 RAILWAY_TOKEN(프로젝트 토큰), 저장소 변수 RAILWAY_SERVICE(서비스 이름 또는 ID)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm install -g @railway/cli
+      - name: Railway 배포
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service "${{ vars.RAILWAY_SERVICE }}"
