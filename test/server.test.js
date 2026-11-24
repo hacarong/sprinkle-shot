@@ -74,10 +74,12 @@ test('방 입장과 상태 중계', async () => {
   const ja = await a.next();
   assert.equal(ja.t, 'joined');
   assert.equal(ja.room, 'TEST');
+  assert.equal(ja.host, ja.id);
 
   b.send(JSON.stringify({ t: 'join', room: 'TEST', name: 'B' }));
   const jb = await b.next();
   assert.equal(jb.players.length, 2);
+  assert.equal(jb.host, ja.id);
   assert.equal((await a.next()).t, 'peer_join');
 
   a.send(JSON.stringify({ t: 'state', s: { x: 1, z: 2 } }));
@@ -85,7 +87,7 @@ test('방 입장과 상태 중계', async () => {
   assert.deepEqual(st, { t: 'state', id: ja.id, s: { x: 1, z: 2 } });
 
   b.close();
-  assert.deepEqual(await a.next(), { t: 'peer_leave', id: jb.id });
+  assert.deepEqual(await a.next(), { t: 'peer_leave', id: jb.id, host: ja.id });
   a.close();
 });
 
