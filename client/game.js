@@ -4,7 +4,7 @@ var _el={},_sv={};
 var $=function(id){return _el[id]||(_el[id]=document.getElementById(id))};
 /* 값이 바뀔 때만 DOM에 기록 */
 function st(id,prop,val){var k=id+prop;if(_sv[k]!==val){_sv[k]=val;$(id).style[prop]=val}}
-var CFG={sens:1,vol:1,cap:0,fps:false,dyn:true,mini:true,diff:1};
+var CFG={sens:1,vol:1,cap:0,fps:false,dyn:true,mini:true,diff:1,bsz:1,auto:false,shk:1,fls:1,hl:0};
 try{var c0=JSON.parse(localStorage.getItem('ss_cfg'))||{};for(var ck in CFG)if(typeof c0[ck]===typeof CFG[ck])CFG[ck]=c0[ck]}catch(e){}
 function saveCfg(){try{localStorage.setItem('ss_cfg',JSON.stringify(CFG))}catch(e){}}
 var DFD=[.7,1,1.35],DFH=[.85,1,1.2]; /* 난이도: 받는 피해 · 적 체력 */
@@ -1357,8 +1357,13 @@ function update(dt){
   mLight.intensity=Math.max(0,mLight.intensity-dt*30);xLight.intensity=Math.max(0,xLight.intensity-dt*9);shake=Math.max(0,shake-dt*1.9);boomA=Math.max(0,boomA-dt*2.2);
   var W=WP[CUR];
   if(swT>0){swT-=dt;if(swT<=.13&&CUR!==nextW)showGun(nextW)}
-  else if(P.rel>0){P.rel-=dt;if(P.rel<=0){var need=Math.min(magOf(CUR)-P.am[CUR],P.rs[CUR]);P.am[CUR]+=need;P.rs[CUR]-=need}}
-  else if((firing||K.fire)&&P.cd<=0){if(P.am[CUR]>0)shoot();else if(P.rs[CUR]>0)reload();else{P.cd=.4;beep(500,400,.04,.04,'triangle');note('탄약 없음')}}
+  else if(P.rel>0){
+    if(P.rsh&&(firing||K.fire)&&P.am[1]>0){P.rel=0;P.rsh=0} /* 산탄총 장전 중 사격으로 끊기 */
+    else{P.rel-=dt;if(P.rel<=0){
+      if(P.rsh){P.am[1]++;P.rs[1]--;sShell();gpV+=.5;hudC='';
+        if(P.am[1]<magOf(1)&&P.rs[1]>0)P.rel=shellT();else{P.rsh=0;if(P.relE){P.cd=.4;caseP=0;sPump()}}}
+      else{var need=Math.min(magOf(CUR)-P.am[CUR],P.rs[CUR]);P.am[CUR]+=need;P.rs[CUR]-=need}}}}
+  else if((firing||K.fire||autoOn(dt))&&P.cd<=0){if(P.am[CUR]>0)shoot();else if(P.rs[CUR]>0)reload();else{P.cd=.4;beep(500,400,.04,.04,'triangle');note('탄약 없음')}}
 
   var at=(rmb||adsT)&&P.rel<=0&&swT<=0?1:0;adsA+=Math.max(-dt*7,Math.min(dt*7,at-adsA));
   flowT-=dt;if(flowT<=0){flow();flowT=.3}
@@ -1688,15 +1693,15 @@ $('rst').addEventListener('click',start);
 /* 설정 */
 function applyCfg(){
   if(MG)MG.gain.value=snd?.9*CFG.vol:0;
+  document.documentElement.style.setProperty('--bs',CFG.bsz);
   st('fps','display',CFG.fps?'block':'none');st('mm','display',CFG.mini?'block':'none');
   if(!CFG.dyn&&rsc!==1){rsc=1;applyRes()}
 }
 (function(){
   function bind(id,key,num){var e=$(id);if(e.type==='checkbox')e.checked=CFG[key];else e.value=CFG[key];
     e.addEventListener(e.type==='range'?'input':'change',function(){CFG[key]=e.type==='checkbox'?e.checked:num?+e.value:e.value;saveCfg();applyCfg();out()})}
-  function out(){$('sensv').textContent=CFG.sens.toFixed(1)+'배';$('volv').textContent=Math.round(CFG.vol*100)+'%'}
-  bind('sens','sens',1);bind('vol','vol',1);bind('cap','cap',1);bind('diff','diff',1);bind('fpsc','fps');bind('dync','dyn');bind('minic','mini');out();applyCfg();
-  $('sbtn').addEventListener('click',function(){var k=$('sets'),open=k.hidden;k.hidden=!open;this.setAttribute('aria-expanded',open)});
+  function out(){$('sensv').textContent=CFG.sens.toFixed(1)+'배';$('volv').textContent=Math.round(CFG.vol*100)+'%';$('bszv').textContent=Math.round(CFG.bsz*100)+'%';$('shkv').textContent=Math.round(CFG.shk*100)+'%';$('flsv').textContent=Math.round(CFG.fls*100)+'%'}
+  bind('sens','sens',1);bind('vol','vol',1);bind('cap','cap',1);bind('diff','diff',1);bind('fpsc','fps');bind('dync','dyn');bind('minic','mini');bind('bsz','bsz',1);bind('autoc','auto');bind('shk','shk',1);bind('fls','fls',1);bind('hl','hl',1);out();applyCfg();
 })();
 function setShd(v){SHD=v;sun.castShadow=v;var b=$('shd');b.setAttribute('aria-pressed',v);b.textContent=v?'그림자 켬':'그림자 끔';try{localStorage.setItem('botarena3d_shadow',v?'1':'0')}catch(e){}}
 $('shd').addEventListener('click',function(){setShd(!SHD)});setShd(SHD);
