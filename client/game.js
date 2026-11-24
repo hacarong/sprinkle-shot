@@ -441,7 +441,7 @@ function mkBot(tp){
   var bs=new T.Mesh(gShadow,mShadow);bs.rotation.x=-Math.PI/2;bs.position.y=.03;u.add(bs);
   var lz=null;if(tp==='sniper'||tp==='crusher'||tp==='medic'){lz=new T.Mesh(trG,tp==='medic'?mHeal:mLaser);lz.visible=false;lz.frustumCulled=false;scene.add(lz)}
   scene.add(g);
-  return {g:g,up:up,head:head,thL:L[0],knL:L[1],thR:R[0],knR:R[1],aL:aL,aR:aR,fl:fl,sh:bs,mat:mat,lz:lz,halo:halo,cm:cm,nr:true};
+  return {g:g,u:u,far:fm,up:up,head:head,thL:L[0],knL:L[1],thR:R[0],knR:R[1],aL:aL,aR:aR,fl:fl,sh:bs,mat:mat,lz:lz,halo:halo,cm:cm,nr:true};
 }
 function killMesh(b){scene.remove(b.m.g);if(b.m.lz)scene.remove(b.m.lz);b.m.mat.dispose();if(bossB===b)bossB=null}
 
@@ -484,13 +484,20 @@ var WP=[
     g.fillStyle=r;g.fillRect(0,0,128,128)});
   function MC(c){return new T.MeshMatcapMaterial({color:c,matcap:mcT})}
   var m1=MC(0x8e8a9c),m2=MC(0xb4aec6),m3=MC(0x5c5a64),ma=new T.MeshBasicMaterial({color:0xA68FBD}),
-      mh=PH(0x2b292f,12),mw=PH(0x8a6a4c,25),ms=PH(0x4a4650,10),ml=new T.MeshBasicMaterial({color:0x9fc0e6}),g,q,o,mag,pump;
+      mh=PH(0x2b292f,12),mw=PH(0x8a6a4c,25),ms=PH(0x4a4650,10),ml=new T.MeshBasicMaterial({color:0x9fc0e6}),mk=PH(0x3d3a42,20),g,q,o,mag,pump,lh,bolt;
   function cyl(r1,r2,len,m,y,z,par){var c=new T.Mesh(new T.CylinderGeometry(r1,r2,len,10),m);c.rotation.x=Math.PI/2;c.position.set(0,y,z);par.add(c);return c}
+  /* 오른손: 손등 · 손가락 3 · 방아쇠 손가락 · 엄지 · 손목 보호대 · 팔 */
   function rear(g,gz){box(.085,.1,.09,mh,0,-.105,gz,g);o=box(.09,.09,.3,ms,.03,-.2,gz+.135,g);o.rotation.x=.55;
-    for(var f=0;f<3;f++)box(.075,.022,.03,mh,0,-.075-f*.027,gz-.05,g);box(.022,.03,.07,mh,-.045,-.05,gz-.01,g);
-    o=box(.096,.03,.096,m3,.03,-.15,gz+.06,g);o.rotation.x=.55}
-  function front(g,fz){box(.085,.075,.11,mh,0,-.065,fz,g);o=box(.086,.086,.34,ms,-.07,-.13,fz+.14,g);o.rotation.set(-.35,.45,0);
-    for(var f=0;f<4;f++)box(.022,.055,.024,mh,-.05,-.03,fz-.04+f*.027,g);box(.022,.045,.03,mh,.05,-.035,fz,g)}
+    for(var f=0;f<3;f++){box(.075,.022,.03,mh,0,-.075-f*.027,gz-.05,g);box(.079,.008,.012,mk,0,-.075-f*.027,gz-.062,g)}
+    box(.022,.03,.07,mh,-.045,-.05,gz-.01,g);box(.02,.02,.05,mh,.03,-.062,gz-.075,g);box(.026,.026,.03,mk,-.047,-.05,gz+.03,g);
+    box(.06,.03,.05,mk,0,-.06,gz+.02,g);
+    o=box(.096,.03,.096,m3,.03,-.15,gz+.06,g);o.rotation.x=.55;o=box(.1,.012,.1,mk,.03,-.165,gz+.075,g);o.rotation.x=.55}
+  /* 왼손: 재장전 때 따로 움직이도록 그룹으로 반환 */
+  function front(g,fz){var h=new T.Group();g.add(h);box(.085,.075,.11,mh,0,-.065,fz,h);o=box(.086,.086,.34,ms,-.07,-.13,fz+.14,h);o.rotation.set(-.35,.45,0);
+    for(var f=0;f<4;f++){box(.022,.055,.024,mh,-.05,-.03,fz-.04+f*.027,h);box(.012,.02,.026,mk,-.058,-.012,fz-.04+f*.027,h)}
+    box(.022,.045,.03,mh,.05,-.035,fz,h);box(.024,.02,.03,mk,.052,-.02,fz+.03,h);box(.06,.02,.09,mk,0,-.105,fz,h);
+    o=box(.094,.03,.094,m3,-.045,-.105,fz+.07,h);o.rotation.set(-.35,.45,0);return h}
+  function mkBolt(g,x,y,z){var b=new T.Group();b.position.set(x,y,z);g.add(b);box(.012,.012,.07,m2,0,0,0,b);box(.024,.024,.024,m3,.022,0,.04,b);return b}
   /* 소총 */
   g=new T.Group();
   box(.07,.1,.34,m1,0,0,0,g);box(.074,.03,.2,m3,0,-.045,.02,g);
@@ -505,14 +512,14 @@ var WP=[
   o=box(.05,.13,.06,m3,0,-.1,.13,g);o.rotation.x=-.32;
   box(.058,.085,.2,m1,0,-.008,.27,g);box(.066,.11,.03,m3,0,-.012,.38,g);
   box(.074,.012,.12,ma,0,.024,-.02,g);
-  front(g,-.3);rear(g,.135);
-  box(.004,.03,.07,m3,.036,.015,-.02,g);box(.02,.015,.03,m2,.045,.03,.06,g);box(.074,.012,.012,m2,0,-.01,.08,g);
+  lh=front(g,-.3);rear(g,.135);
+  box(.004,.03,.07,m3,.036,.015,-.02,g);bolt=box(.02,.015,.03,m2,.045,.03,.06,g);box(.074,.012,.012,m2,0,-.01,.08,g);
   for(q=0;q<3;q++)box(.048,.008,.078,m3,0,-.09-q*.035,-.055-q*.006,mag.parent);
   for(q=0;q<7;q++)box(.032,.007,.018,m2,0,.067,-.3+q*.045,g);
   o=cyl(.016,.016,.09,m3,-.005,-.36,g);o.position.x=-.045;box(.02,.02,.004,ml,-.045,-.005,-.406,g);
   box(.05,.006,.02,m3,0,.005,-.68,g);box(.006,.05,.02,m3,0,.005,-.68,g);box(.045,.02,.12,m2,0,.045,.27,g);
   box(.01,.014,.5,m3,.036,-.03,-.2,g);
-  guns.push({g:g,mag:mag,my:-.125,fz:-.74,fy:.005,hip:[.23,-.22,-.46],ads:[0,-.118,-.34]});
+  guns.push({g:g,mag:mag,my:-.125,lh:lh,bolt:bolt,bz:.06,fz:-.74,fy:.005,hip:[.23,-.22,-.46],ads:[0,-.118,-.34]});
   /* 산탄총 */
   g=new T.Group();
   box(.075,.1,.3,m1,0,0,.02,g);box(.079,.03,.1,m3,0,.02,.02,g);
@@ -528,7 +535,8 @@ var WP=[
   box(.058,.012,.34,m1,0,.05,-.44,g);for(q=0;q<5;q++)box(.06,.014,.02,m3,0,.05,-.58+q*.07,g);
   box(.012,.05,.16,m3,.044,0,.02,g);for(q=0;q<4;q++){o=box(.016,.05,.022,PH(0xd9776c,30),.054,0,-.035+q*.035,g);box(.017,.012,.023,mw,.054,-.02,-.035+q*.035,g)}
   box(.03,.03,.02,m3,0,-.03,-.6,g);box(.06,.012,.26,m3,0,-.085,.31,g);
-  guns.push({g:g,pump:pump,fz:-.72,fy:.022,hip:[.23,-.21,-.44],ads:[0,-.085,-.36]});
+  var shl=box(.022,.022,.06,PH(0xd9776c,30),0,-.2,.02,g);shl.visible=false;
+  guns.push({g:g,pump:pump,shell:shl,fz:-.72,fy:.022,hip:[.23,-.21,-.44],ads:[0,-.085,-.36]});
   /* 저격총 */
   g=new T.Group();
   box(.07,.09,.4,m1,0,0,0,g);box(.06,.06,.32,m2,0,-.012,-.34,g);
@@ -537,18 +545,18 @@ var WP=[
   cyl(.034,.034,.3,m3,.098,-.05,g);cyl(.046,.036,.08,m3,.098,-.235,g);cyl(.04,.034,.05,m3,.098,.115,g);
   box(.022,.04,.03,m1,0,.058,-.13,g);box(.022,.04,.03,m1,0,.058,.03,g);
   box(.034,.034,.004,ma,0,.098,.142,g);box(.03,.03,.03,m2,0,.14,-.05,g);box(.03,.03,.03,m2,.045,.098,-.05,g);
-  box(.012,.012,.07,m2,.048,.012,.1,g);box(.024,.024,.024,m3,.07,.012,.14,g);
+  bolt=mkBolt(g,.048,.012,.1);
   mag=box(.042,.1,.09,m2,0,-.085,-.05,g);
   box(.02,.03,.04,m3,0,-.06,.07,g);
   o=box(.05,.12,.06,m3,0,-.1,.14,g);o.rotation.x=-.32;
   box(.058,.1,.26,m1,0,-.02,.33,g);box(.066,.12,.03,m3,0,-.025,.47,g);box(.05,.03,.14,m2,0,.045,.33,g);
   o=box(.012,.1,.012,m3,.035,-.075,-.44,g);o.rotation.z=.35;o=box(.012,.1,.012,m3,-.035,-.075,-.44,g);o.rotation.z=-.35;
   box(.074,.012,.12,ma,0,.02,-.02,g);
-  front(g,-.32);rear(g,.145);
+  lh=front(g,-.32);rear(g,.145);
   box(.05,.05,.004,ml,0,.098,-.277,g);box(.06,.012,.02,m3,0,.012,-.86,g);box(.012,.06,.02,m3,0,.012,-.86,g);
   for(q=0;q<3;q++)box(.074,.008,.03,m3,0,.03,-.14+q*.07,g);box(.03,.02,.2,m3,0,-.05,-.34,g);
   box(.01,.014,.4,m2,.036,-.02,-.3,g);box(.045,.006,.3,m3,0,.133,-.05,g);
-  guns.push({g:g,mag:mag,my:-.085,fz:-.93,fy:.012,hip:[.23,-.22,-.44],ads:[0,-.11,-.3]});
+  guns.push({g:g,mag:mag,my:-.085,lh:lh,sbolt:bolt,fz:-.93,fy:.012,hip:[.23,-.22,-.44],ads:[0,-.11,-.3]});
   /* 로켓런처 */
   var mr=new T.MeshLambertMaterial({color:0xd9776c}),war;
   g=new T.Group();
@@ -557,11 +565,37 @@ var WP=[
   box(.03,.03,.3,m1,0,.062,-.12,g);box(.012,.06,.012,m3,0,.1,-.25,g);box(.03,.03,.01,ma,0,.1,-.1,g);
   war=new T.Mesh(new T.ConeGeometry(.045,.17,10),mr);war.rotation.x=-Math.PI/2;war.position.set(0,0,-.7);g.add(war);
   o=box(.05,.13,.06,m3,0,-.11,-.02,g);o.rotation.x=-.25;box(.04,.04,.16,m1,0,-.066,.08,g);
-  front(g,-.3);rear(g,-.015);
+  lh=front(g,-.3);rear(g,-.015);
   box(.11,.02,.3,m1,0,-.055,-.3,g);cyl(.045,.045,.02,m3,0,.485,g);for(q=0;q<4;q++)box(.108,.108,.012,m3,0,0,-.2+q*.14,g);
   box(.05,.07,.004,m3,0,.13,-.25,g);box(.05,.004,.03,m3,0,.165,-.25,g);box(.03,.05,.08,m3,-.07,.02,.1,g);
   o=box(.04,.1,.05,m3,0,-.1,.25,g);o.rotation.x=.3;
-  guns.push({g:g,war:war,fz:-.72,fy:0,hip:[.25,-.19,-.4],ads:[.1,-.12,-.3]});
+  guns.push({g:g,war:war,lh:lh,fz:-.72,fy:0,hip:[.25,-.19,-.4],ads:[.1,-.12,-.3]});
+  /* 화염방사기 */
+  var mt2=PH(0xb85a4a,40),mo=new T.MeshBasicMaterial({color:0xffb060});
+  g=new T.Group();
+  box(.075,.09,.36,m1,0,0,0,g);box(.079,.03,.2,m3,0,-.04,.02,g);cyl(.022,.022,.5,m3,.01,-.42,g);cyl(.034,.024,.1,m1,.01,-.7,g);cyl(.04,.034,.03,m3,.01,-.76,g);
+  for(q=0;q<4;q++)cyl(.027,.027,.015,m2,.01,-.3-q*.09,g);
+  o=cyl(.008,.008,.42,m3,-.03,-.44,g);box(.02,.02,.02,mo,0,-.03,-.66,g);
+  mag=new T.Mesh(new T.CylinderGeometry(.05,.05,.26,12),mt2);mag.rotation.x=Math.PI/2;mag.position.set(0,-.105,-.02);g.add(mag);
+  o=cyl(.052,.052,.02,m3,-.105,.1,g);o=cyl(.052,.052,.02,m3,-.105,-.14,g);box(.03,.03,.03,ma,0,-.105,.13,g);
+  box(.03,.014,.3,m3,0,.052,-.02,g);box(.012,.03,.012,m3,0,.07,-.3,g);box(.058,.085,.18,m1,0,-.01,.27,g);box(.066,.11,.03,m3,0,-.014,.37,g);
+  o=box(.05,.13,.06,m3,0,-.1,.14,g);o.rotation.x=-.32;box(.076,.012,.12,ma,0,.02,-.02,g);
+  lh=front(g,-.3);rear(g,.145);
+  guns.push({g:g,mag:mag,my:-.105,lh:lh,fz:-.8,fy:.01,hip:[.23,-.21,-.44],ads:[.06,-.14,-.36]});
+  /* 레일건 */
+  g=new T.Group();
+  box(.08,.1,.36,m1,0,0,.02,g);box(.084,.03,.2,m3,0,-.04,.04,g);
+  box(.016,.03,.72,m2,.026,.022,-.5,g);box(.016,.03,.72,m2,-.026,.022,-.5,g);box(.022,.012,.68,ml,0,.022,-.5,g);
+  for(q=0;q<5;q++)box(.086,.05,.02,m3,0,.022,-.22-q*.14,g);
+  box(.07,.06,.3,m1,0,-.03,-.3,g);cyl(.03,.03,.16,m3,-.035,-.52,g);
+  bolt=box(.05,.05,.1,ml,0,.075,.08,g);box(.06,.012,.3,m3,0,.056,.02,g);box(.012,.04,.012,m3,0,.085,-.14,g);box(.03,.012,.012,ma,0,.1,-.14,g);
+  mag=box(.05,.12,.1,m2,0,-.1,-.02,g);box(.054,.02,.104,ma,0,-.08,-.02,g);
+  o=box(.05,.13,.06,m3,0,-.11,.16,g);o.rotation.x=-.32;box(.06,.1,.24,m1,0,-.015,.34,g);box(.068,.12,.03,m3,0,-.02,.47,g);
+  box(.02,.03,.04,m3,0,-.065,.09,g);box(.084,.012,.14,ma,0,-.022,.02,g);
+  lh=front(g,-.3);rear(g,.165);
+  guns.push({g:g,mag:mag,my:-.1,lh:lh,core:bolt,fz:-.9,fy:.022,hip:[.23,-.22,-.44],ads:[0,-.13,-.32]});
+  /* 떨어지는 탄창 */
+  for(q=0;q<3;q++){o=box(.044,.17,.075,m2,0,0,0,gScene);o.visible=false;DMAG.push({m:o,l:0,vx:0,vy:0,vr:0})}
   var ft=tex(function(g){var r=g.createRadialGradient(64,64,2,64,64,62);r.addColorStop(0,'#fff');r.addColorStop(.25,'#ffe7b8');r.addColorStop(.6,'rgba(255,170,80,.35)');r.addColorStop(1,'rgba(255,140,60,0)');
     g.fillStyle=r;g.fillRect(0,0,128,128);g.strokeStyle='rgba(255,240,210,.9)';g.lineWidth=5;
     for(var q=0;q<4;q++){g.beginPath();g.moveTo(64,64);g.lineTo(64+Math.cos(q*1.57+.4)*60,64+Math.sin(q*1.57+.4)*60);g.stroke()}});
@@ -1037,6 +1071,7 @@ function bang(v,fq,dur){nz(dur||.16,v,'lowpass',fq,fq*.5);tone('sine',160,45,.1,
 /* 위치 → 패닝 · 감쇠 */
 function sp(x,z,rev){var dx=x-P.x,dz=z-P.z,d=Math.hypot(dx,dz);return {pan:d<.6?0:(dx*Math.cos(P.yaw)-dz*Math.sin(P.yaw))/d*.85,att:1/(1+d/12),rev:rev||0,d:0}}
 function sShot(w){
+  if(w===5){nz(.5,.5,'bandpass',5000,300,{q:1.5,rev:.9});tone('sawtooth',1800,90,.35,.3,{rev:.7});tone('sine',90,30,.4,.6);tone('square',3200,3200,.05,.1);return}
   if(w===0){nz(.08,.3,'highpass',1100,500,{rev:.25});nz(.17,.24,'lowpass',2800,420,{rev:.35});tone('triangle',200,52,.09,.34);tone('square',2600,900,.018,.05)}
   else if(w===1){nz(.32,.55,'lowpass',1500,150,{rev:.6});tone('sine',125,36,.26,.6);nz(.07,.32,'highpass',1700,800);
     nz(.05,.16,'bandpass',1900,1500,{d:.3,q:3});nz(.06,.18,'bandpass',1150,900,{d:.45,q:3});tone('square',240,180,.03,.05,{d:.45})}
@@ -1233,7 +1268,7 @@ function pause(){
   state='pause';firing=false;rmb=false;K={};joyId=lookId=null;jx=jy=0;$('joy').style.display='none';
   try{if(document.exitPointerLock)document.exitPointerLock()}catch(e){}
   $('ttl').textContent='일시정지';$('subt').textContent=MDEF.name+' · 웨이브 '+Math.max(1,wave)+' · 처치 '+kills;
-  $('res').hidden=true;$('help').hidden=true;$('go').textContent='계속';$('rst').hidden=false;$('ov').hidden=false;$('go').focus();
+  $('res').hidden=true;$('go').textContent='계속';$('rst').hidden=false;$('ov').hidden=false;$('go').focus();
 }
 function resume(){if(state!=='pause')return;state='play';$('ov').hidden=true;$('rst').hidden=true;acc=0;try{cv.focus()}catch(e){}}
 /* 강화 선택: 2웨이브마다 3개 중 1개 */
@@ -1251,7 +1286,7 @@ var PERKS=[
 function openPick(){
   state='pick';firing=false;rmb=false;K={};joyId=lookId=null;jx=jy=0;$('joy').style.display='none';
   try{if(document.exitPointerLock)document.exitPointerLock()}catch(e){}
-  var pool=PERKS.slice(),box=$('pkl'),q;pkOpt=[];box.textContent='';
+  var pool=PERKS.filter(function(p){return !p[3]||!PK[p[3]]}),box=$('pkl'),q;pkOpt=[];box.textContent='';
   for(q=0;q<3;q++)pkOpt.push(pool.splice(Math.random()*pool.length|0,1)[0]);
   pkOpt.forEach(function(p,n){
     var b=document.createElement('button'),t=document.createElement('b'),d=document.createElement('span');
@@ -1298,7 +1333,7 @@ function shoot(){
     if(hitB&&hitB.tp==='shield'&&!head&&dx*Math.sin(hitB.rot)+dz*Math.cos(hitB.rot)<-.35&&ey-hitB.y<1.5*hitB.sc)blk=true;
     if(hitB&&blk){puff(ex,ey,ez,5,3,.7,.85,1,.25);sShieldHit(ex,ez);shB=true}
     else if(hitB){
-      var dm0=W.dmg*PK.dmg*(head?2.05:1)*(P.pw>0?2:1);hitAny=true;if(head)headAny=true;
+      var dm0=W.dmg*PK.dmg*dmul*(head?2.05:1)*(P.pw>0?2:1);hitAny=true;if(head)headAny=true;
       if(!hitB.acc){hitB.acc=0;accL.push(hitB)}if(!hitB.inv){hitB.acc+=dm0;if(head)hitB.ach=1}
       puff(ex,ey,ez,W.pel>1?3:7,3,.78,.62,.9,.35);dmgBot(hitB,dm0,ex,ey,ez,head,0,true);
     }else if(wt>=0){
@@ -1330,7 +1365,7 @@ function update(dt){
   if(l>.05){move(P,(fx*f+rx*s)*spd,(fz*f+rz*s)*spd,.3);bobT+=dt*11*Math.min(1,l)}
   /* 대시: 입력 방향(없으면 전방)으로 짧게 가속 */
   P.dc-=dt;P.gc-=dt;
-  if(P.dq){P.dq=0;P.dc=2.2*PK.dash;P.ds=.16;if(l>.05){P.dvx=(fx*f+rx*s)/Math.min(1,l);P.dvz=(fz*f+rz*s)/Math.min(1,l)}else{P.dvx=fx;P.dvz=fz}
+  if(P.dq){P.dq=0;P.dc=2.2*PK.dash;P.ds=.16;P.did++;grV+=(s<0?1:-1)*2.5;if(l>.05){P.dvx=(fx*f+rx*s)/Math.min(1,l);P.dvz=(fz*f+rz*s)/Math.min(1,l)}else{P.dvx=fx;P.dvz=fz}
     nz(.22,.16,'bandpass',700,2600,{q:1.2});tone('sine',300,140,.16,.08);hudC=''}
   if(P.ds>0){P.ds-=dt;move(P,P.dvx*24*dt,P.dvz*24*dt,.3)}
   if(P.vy>0&&solid(P.x,P.y+1.85,P.z))P.vy=0; /* 머리 위 충돌 */
@@ -1368,7 +1403,7 @@ function update(dt){
 
   var at=(rmb||adsT)&&P.rel<=0&&swT<=0?1:0;adsA+=Math.max(-dt*7,Math.min(dt*7,at-adsA));
   flowT-=dt;if(flowT<=0){flow();flowT=.3}
-  if(CUR===3&&swT<=0&&P.rel<=0&&P.cd<=0&&P.am[3]<=0){if(P.rs[3]>0)reload();else switchTo(0)}
+  if(CUR>=3&&swT<=0&&P.rel<=0&&P.cd<=0&&P.am[CUR]<=0){if(P.rs[CUR]>0)reload();else switchTo(0)}
   /* 로켓 */
   for(q=rockets.length-1;q>=0;q--){
     var rk=rockets[q],vs=rk.e?17*ets:40,n=Math.max(1,Math.ceil(vs*dt/.3)),k,hit=solid(rk.x,rk.y,rk.z),o2;
@@ -1581,7 +1616,7 @@ function savePrev(){
 }
 function sync(){
   var q,b,m;
-  ip(P);cam.position.set(IX,IY+1.6+(RM?0:Math.sin(bobT*2)*.025),IZ);cam.rotation.set(P.pitch+kick,P.yaw,0);
+  ip(P);cam.position.set(IX,IY+1.6+(RM?0:Math.sin(bobT*2)*.025),IZ);cam.rotation.set(P.pitch+kick,P.yaw+kickY,0);
   mLight.position.copy(cam.position);
   if(shake>0){cam.rotation.x+=(Math.random()-.5)*shake*.07;cam.rotation.y+=(Math.random()-.5)*shake*.05;cam.rotation.z=(Math.random()-.5)*shake*.07}
   dome.position.copy(cam.position);clouds.position.copy(cam.position);clouds.rotation.y=tNow*.004;sun.position.set(P.x+10,P.y+24,P.z+26);sun.target.position.set(P.x,P.y,P.z);sun.target.updateMatrixWorld();
@@ -1621,15 +1656,46 @@ function sync(){
       for(var w=0;w<4;w++)dm.rot[w].rotation.y=tNow*40+w}}
   for(q=0;q<items.length;q++){var it=items[q],g=it.g;g.position.set(it.x,it.y+.6+Math.sin(tNow*3+q)*.08,it.z);g.rotation.y=tNow*1.8;
     g.userData.ring.rotation.z=-tNow*1.8;g.visible=it.life>4||(tNow*6|0)%2===0}
-  var W=WP[CUR],G=guns[CUR],a=adsA,rp=P.rel>0?Math.min(1,(relT(CUR)-P.rel)/relT(CUR)):0,rl=rp?Math.sin(rp*Math.PI):0,
-      sw=swT>0?Math.sin((1-swT/.26)*Math.PI):0,bk=RM?0:1-a,sc=CUR===2&&a>.85;
-  G.g.position.set(G.hip[0]+(G.ads[0]-G.hip[0])*a+Math.sin(bobT)*.006*bk,
-    G.hip[1]+(G.ads[1]-G.hip[1])*a+Math.abs(Math.cos(bobT))*.006*bk-rl*.12-sw*.3,
-    G.hip[2]+(G.ads[2]-G.hip[2])*a+recoil*.045);
-  G.g.rotation.set(recoil*.07*(1-a*.6)+rl*.5-sw*.9,rl*.35,rl*-.3);G.g.visible=!sc;
-  if(G.mag)G.mag.position.y=G.my-(rp<.1?0:rp<.35?(rp-.1)/.25:rp<.5?1:rp<.75?1-(rp-.5)/.25:0)*.22;
-  if(G.war)G.war.visible=P.am[3]>0&&P.rel<=0;
-  if(G.pump){var pp=1-P.cd/(W.rate/PK.rate);G.pump.position.z=-.32+(pp>.15&&pp<.75?Math.sin((pp-.15)/.6*Math.PI)*.09:0)}
+  /* ---- 1인칭 총 모션 ---- */
+  var W=WP[CUR],G=guns[CUR],e0=adsA,a=e0*e0*(3-2*e0),dtg=Math.min(.033,fdt),rT=CUR===1?shellT():relT(CUR),
+      rp=P.rel>0?Math.max(0,Math.min(1,(rT-P.rel)/rT)):0,sw=swT>0?Math.sin((1-swT/.26)*Math.PI):0,bk=RM?0:1-a,sc=CUR===2&&a>.85,
+      rate=W.rate/PK.rate,cyc=Math.max(0,Math.min(1,1-P.cd/rate));
+  function ss(x,a0,b0){x=(x-a0)/(b0-a0);x=x<0?0:x>1?1:x;return x*x*(3-2*x)}
+  /* 반동 스프링 */
+  gzV+=(-190*gz-19*gzV)*dtg;gz+=gzV*dtg;gpV+=(-170*gp-17*gpV)*dtg;gp+=gpV*dtg;
+  gyV+=(-150*gyw-16*gyV)*dtg;gyw+=gyV*dtg;grV+=(-150*gr-15*grV)*dtg;gr+=grV*dtg;gyyV+=(-140*gy-15*gyyV)*dtg;gy+=gyyV*dtg;
+  /* 시점 이동에 따른 총 흔들림 */
+  var dyw=P.yaw-lyaw,dpt=P.pitch-lpit;lyaw=P.yaw;lpit=P.pitch;if(dyw>3)dyw-=6.283;if(dyw<-3)dyw+=6.283;
+  var k1=Math.min(1,fdt*9);swX+=(Math.max(-.07,Math.min(.07,dyw*.8))-swX)*k1;swY+=(Math.max(-.06,Math.min(.06,dpt*.8))-swY)*k1;
+  kickY*=Math.max(0,1-fdt*7);if(melA>0)melA=Math.max(0,melA-fdt*3.4);
+  var air=Math.max(-.03,Math.min(.03,-P.vy*.004)),ml2=melA>0?Math.sin(melA*Math.PI):0,
+      tl=0,magD=0,boltB=0,lhY=0;
+  if(P.rsh||CUR===1&&relA>.01){relA+=((P.rsh?1:0)-relA)*Math.min(1,fdt*9);tl=relA}
+  else if(rp>0){tl=ss(rp,0,.14)*(1-ss(rp,.7,.9));
+    magD=rp<.16?0:rp<.3?ss(rp,.16,.3):rp<.4?1:1-ss(rp,.4,.58);lhY=magD;
+    if(P.relE)boltB=ss(rp,.8,.87)*(1-ss(rp,.87,.96));
+    if(!P.dm&&rp>.24&&G.mag&&CUR!==3){P.dm=1;var dg=DMAG[dmI];dmI=(dmI+1)%DMAG.length;dg.m.position.set(G.g.position.x,G.g.position.y+G.my-.2,G.g.position.z+(G.mag.position.z||0));
+      dg.m.rotation.set(.2,0,-.4);dg.m.visible=true;dg.l=.7;dg.vx=-.15;dg.vy=-.2;dg.vr=3}
+    if(rp>.58&&P.dm===1){P.dm=2;gyyV-=.35;gpV+=.6}} /* 탄창 결합 충격 */
+  else if(relA>0)relA=0;
+  for(q=0;q<DMAG.length;q++){var dg2=DMAG[q];if(dg2.l>0){dg2.l-=fdt;dg2.vy-=4.5*fdt;dg2.m.position.x+=dg2.vx*fdt;dg2.m.position.y+=dg2.vy*fdt;dg2.m.rotation.x+=dg2.vr*fdt;if(dg2.l<=0)dg2.m.visible=false}}
+  G.g.position.set(G.hip[0]+(G.ads[0]-G.hip[0])*a+Math.sin(bobT)*.006*bk-swX*.35*(1-a*.6)-tl*.03+ml2*.1,
+    G.hip[1]+(G.ads[1]-G.hip[1])*a+Math.abs(Math.cos(bobT))*.006*bk-sw*.3+gy+air+swY*.3-tl*.04,
+    G.hip[2]+(G.ads[2]-G.hip[2])*a+gz*(1-a*.35)-ml2*.28);
+  G.g.rotation.set(gp*(1-a*.5)-sw*.9-swY+tl*.28+(P.ds>0?-.12:0),gyw*(1-a*.5)+swX+tl*.2+ml2*.9,gr*(1-a*.4)-tl*.5-swX*.6-ml2*.5);G.g.visible=!sc;
+  if(G.mag){G.mag.position.y=G.my-magD*.24;G.mag.visible=!(rp>.3&&rp<.4)}
+  if(G.lh){G.lh.position.y=-lhY*.2;G.lh.position.z=lhY*.05}
+  if(G.bolt)G.bolt.position.z=G.bz+Math.max(recoil*.045,boltB*.05); /* 소총 노리쇠 */
+  if(G.core)G.core.scale.z=1+recoil*.8+(cyc<1?(1-cyc)*.6:0);
+  if(G.war){var wr=P.rel>0?ss(rp,.4,.8):1;G.war.visible=P.am[3]>0||P.rel>0&&rp>.4;G.war.position.z=-.7-(1-wr)*.3}
+  if(G.pump){var pb2=cyc>.15&&cyc<.75?Math.sin((cyc-.15)/.6*Math.PI):0;G.pump.position.z=-.32+pb2*.09;
+    if(caseP&&cyc>.38&&P.rel<=0){caseP=0;eject(G);sPump()}
+    G.shell.visible=!!P.rsh;if(P.rsh){var sp3=ss(rp,.1,.8);G.shell.position.set(.03*(1-sp3),-.2+sp3*.13,.06-sp3*.04)}}
+  if(G.sbolt){ /* 저격총 볼트: 들기 → 당기기 → 밀기 → 내리기 */
+    var up2=ss(cyc,.14,.3)*(1-ss(cyc,.74,.9)),bk2=ss(cyc,.3,.48)*(1-ss(cyc,.52,.72));
+    if(P.rel>0&&P.relE){up2=ss(rp,.78,.84)*(1-ss(rp,.93,.99));bk2=ss(rp,.84,.88)*(1-ss(rp,.89,.93))}
+    G.sbolt.rotation.z=up2*.9;G.sbolt.position.z=.1+bk2*.07;G.g.rotation.z+=up2*.06;G.g.rotation.x+=bk2*.03;
+    if(caseP&&cyc>.44&&P.rel<=0){caseP=0;eject(G);nz(.04,.12,'bandpass',2500,2100,{q:4})}}
   var tf=BF+(W.ads*BF/70-BF)*a;if(Math.abs(cam.fov-tf)>.01){cam.fov=tf;cam.updateProjectionMatrix()}
   st('scope','opacity',sc?'1':'0');st('hud','visibility',sc?'hidden':'');var cc=sc?'sc':a>.5?'ads':'';if(_sv.chc!==cc){_sv.chc=cc;$('ch').className=cc}
   flash.visible=flashT>0;if(flashT>0){flash.rotation.z=Math.random()*6.3;var s=.8+Math.random()*.7;flash.scale.set(s,s,s)}
@@ -1669,7 +1735,7 @@ function start(){
   if(AC&&AC.state==='suspended'){try{AC.resume()}catch(e){}}
   cap=null;reset();state='play';$('ov').hidden=true;$('rst').hidden=true;$('pk').hidden=true;firing=false;K={};acc=0;
   var sw0=+$('sw').value||1; /* 상위 웨이브 시작 시 보급 */
-  if(sw0>1){wave=sw0-1;P.rs=[72+sw0*8,18+sw0,15+(sw0>>1),Math.min(9,2+(sw0/5|0))];P.am[3]=1;P.sh=Math.min(120,40+sw0*3);
+  if(sw0>1){wave=sw0-1;P.rs[0]=72+sw0*8;P.rs[1]=18+sw0;P.rs[2]=15+(sw0>>1);P.rs[3]=Math.min(9,2+(sw0/5|0));P.am[3]=1;P.sh=Math.min(120,40+sw0*3);
     for(var q=0;q<Math.min(5,1+(sw0/8|0));q++)addDrone();for(q=2;q<=sw0;q++)if(INTRO[q])seen[INTRO[q]]=1}
   try{cv.focus()}catch(e){}
 }
