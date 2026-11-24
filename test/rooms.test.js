@@ -25,6 +25,8 @@ test('입장·정원·퇴장', () => {
   }
   assert.deepEqual(r.join('ROOM1', 'late'), { ok: false, reason: 'full' });
   assert.equal(r.players('ROOM1').length, MAX_PLAYERS);
+  assert.equal(r.host('ROOM1'), ids[0]);
+  assert.equal(r.host('NONE'), 0);
   assert.deepEqual(r.peers('ROOM1', ids[0]), ids.slice(1));
   assert.equal(r.leave('ROOM1', ids[0]), true);
   assert.equal(r.leave('ROOM1', ids[0]), false);

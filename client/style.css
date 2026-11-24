@@ -151,3 +151,25 @@ input:focus-visible{outline:2px solid #EEECE9;outline-offset:3px}
   .pki{grid-row:1/span 3}.pkc,.pkb b,.pkd,.pko{grid-column:2}
   .pkb b{margin:0;font-size:17px}.pko{border:0;padding:0}
 }
+/* v0.6: 강화 카드 — 분류 색과 큰 아이콘 중심 */
+.pkb{align-items:center;text-align:center;gap:8px;min-height:288px;border-top:4px solid var(--pc);background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 14%,#2C2C2C),#2C2C2C 62%)}
+.pkb:hover,.pkb:focus-visible{border-color:var(--pc);background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 26%,#363538),#363538 70%)}
+.pkic{display:grid;place-items:center;width:96px;height:96px;margin:8px 0 4px;border-radius:50%;background:color-mix(in srgb,var(--pc) 24%,transparent);border:2px solid var(--pc)}
+.pki{width:52px;height:52px;stroke:var(--pc);stroke-width:2}
+.pkc{color:var(--pc);font-weight:700}
+.pkb b{font-size:20px}
+.pko{text-align:center}
+@media (max-width:640px){
+  .pkb{min-height:0;text-align:left;align-items:start;grid-template-columns:64px 1fr;border-top-width:1.5px;border-left:4px solid var(--pc)}
+  .pkic{width:64px;height:64px;margin:0;grid-row:1/span 4}.pki{width:34px;height:34px}
+  .pko{text-align:left}
+}
+/* v0.6: 순위 · 멀티 */
+.sel input[type=text]{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:8px;border:1.5px solid #48424E;background:#363538;color:#EEECE9;font:inherit;font-size:15px}
+.sel input[type=text]:focus-visible{outline:2px solid #EEECE9;outline-offset:3px}
+.sel input::placeholder{color:#C1BDC6;opacity:.7}
+#rkt{border-collapse:collapse;width:100%;font-size:14px;line-height:1.8;font-variant-numeric:tabular-nums}
+#rkt th,#rkt td{padding:4px 8px;text-align:left;border-bottom:1px solid #48424E;white-space:nowrap}
+#rkt th{color:#EEECE9;font-weight:700}
+.menu{flex-wrap:wrap}
+.t{flex:1 1 30%}

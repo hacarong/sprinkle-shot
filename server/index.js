@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { WebSocketServer } from 'ws';
 import { Rooms } from './rooms.js';
+import { bundle } from './bundle.js';
+import { makeStore, cleanScore } from './scores.js';
 
 const ROOT = fileURLToPath(new URL('../client/', import.meta.url));
 const MIME = {
@@ -19,8 +21,17 @@ const MIME = {
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
-const MAX_MSG = 2048; // 메시지 1건 최대 바이트
-const RELAY_HZ = 30; // 참가자 1명당 초당 중계 상한
+const MAX_MSG = 8192; // 메시지 1건 최대 바이트(방장의 월드 스냅숏 포함)
+const RELAY_HZ = 60; // 참가자 1명당 초당 중계 상한
+const POST_GAP = 8000; // 같은 주소의 순위 등록 최소 간격(ms)
+
+// 맵 id 목록: 브라우저용 스크립트인 maps.js를 함수로 감싸 읽습니다.
+const MAP_IDS = new Function(`${readFileSync(ROOT + 'maps.js', 'utf8')}; return MAPS.map(function (m) { return m.id; });`)();
+
+function json(res, status, body) {
+  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  res.end(JSON.stringify(body));
+}
 
 // 시작 시 정적 파일을 메모리에 올리고 텍스트는 gzip으로 미리 압축합니다.
 function loadStatic(dir) {
@@ -28,7 +39,9 @@ function loadStatic(dir) {
   (function walk(d) {
     for (const name of readdirSync(d)) {
       const p = join(d, name);
-      if (statSync(p).isDirectory()) walk(p);
+      if (statSync(p).isDirectory()) {
+        if (relative(dir, p) !== 'src') walk(p); // 소스는 묶음(game.js)으로만 제공
+      }
       else {
         const type = MIME[extname(p)] ?? 'application/octet-stream';
         const body = readFileSync(p);
@@ -37,11 +50,14 @@ function loadStatic(dir) {
       }
     }
   })(dir);
+  const game = Buffer.from(bundle());
+  files.set('/game.js', { type: MIME['.js'], body: game, gz: gzipSync(game) });
   return files;
 }
 
-export function createApp() {
+export function createApp({ store = makeStore() } = {}) {
   const files = loadStatic(ROOT);
+  const lastPost = new Map(); // 주소 -> 마지막 등록 시각
   const rooms = new Rooms();
   const started = Date.now();
 
@@ -50,6 +66,38 @@ export function createApp() {
     if (url.pathname === '/healthz') {
       res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
       res.end(JSON.stringify({ ok: true, rooms: rooms.size, uptime: Math.round((Date.now() - started) / 1000) }));
+      return;
+    }
+    if (url.pathname === '/api/scores') {
+      if (req.method === 'GET') {
+        const map = url.searchParams.get('map');
+        if (!MAP_IDS.includes(map)) return json(res, 400, { error: 'bad_map' });
+        store.top(map).then((scores) => json(res, 200, { scores }), () => json(res, 503, { error: 'store' }));
+        return;
+      }
+      if (req.method === 'POST') {
+        const ip = String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress).split(',')[0].trim();
+        const now = Date.now();
+        if (now - (lastPost.get(ip) ?? 0) < POST_GAP) return json(res, 429, { error: 'too_fast' });
+        let body = '';
+        req.on('data', (c) => {
+          body += c;
+          if (body.length > 1024) req.destroy();
+        });
+        req.on('end', () => {
+          let score = null;
+          try {
+            score = cleanScore(JSON.parse(body), MAP_IDS);
+          } catch {}
+          if (!score) return json(res, 400, { error: 'bad_score' });
+          lastPost.set(ip, now);
+          if (lastPost.size > 5000) lastPost.clear();
+          store.add(score).then((rank) => json(res, 200, { ok: true, rank }), () => json(res, 503, { error: 'store' }));
+        });
+        return;
+      }
+      res.writeHead(405, { allow: 'GET, POST' });
+      res.end();
       return;
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -109,7 +157,7 @@ export function createApp() {
         if (!r.ok) return send(ws, { t: 'error', reason: r.reason });
         me = { code: r.code, id: r.id };
         sockets.set(r.id, ws);
-        send(ws, { t: 'joined', id: r.id, room: r.code, players: r.players });
+        send(ws, { t: 'joined', id: r.id, room: r.code, players: r.players, host: rooms.host(r.code) });
         broadcast(r.code, r.id, { t: 'peer_join', player: r.players.find((p) => p.id === r.id) });
         return;
       }
@@ -129,7 +177,7 @@ export function createApp() {
       if (!me) return;
       sockets.delete(me.id);
       rooms.leave(me.code, me.id);
-      broadcast(me.code, me.id, { t: 'peer_leave', id: me.id });
+      broadcast(me.code, me.id, { t: 'peer_leave', id: me.id, host: rooms.host(me.code) });
     });
   });
 

@@ -51,6 +51,12 @@ export class Rooms {
     return [...room.keys()].filter((k) => k !== id);
   }
 
+  // 방장: 가장 먼저 들어온 참가자(가장 작은 id). 방이 없으면 0
+  host(code) {
+    const room = this.rooms.get(code);
+    return room && room.size ? Math.min(...room.keys()) : 0;
+  }
+
   players(code) {
     const room = this.rooms.get(code);
     return room ? [...room.values()] : [];

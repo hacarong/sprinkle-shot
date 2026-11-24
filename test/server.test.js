@@ -27,11 +27,18 @@ test('게임 페이지와 자산 제공', async () => {
   assert.equal(html.status, 200);
   assert.match(html.headers.get('content-type'), /text\/html/);
   assert.match(await html.text(), /game\.js/);
-  for (const p of ['/game.js', '/style.css']) {
+  for (const p of ['/game.js', '/style.css', '/maps.js']) {
     const r = await fetch(`http://${base}${p}`);
     assert.equal(r.status, 200, p);
     assert.ok((await r.text()).length > 1000, p);
   }
+});
+
+test('game.js는 client/src 묶음이고 소스 파일은 직접 제공하지 않음', async () => {
+  const js = await (await fetch(`http://${base}/game.js`)).text();
+  assert.match(js, /^\(function\(\)\{/);
+  assert.match(js, /\}\)\(\);\s*$/);
+  assert.equal((await fetch(`http://${base}/src/00-core.js`)).status, 404);
 });
 
 test('없는 경로는 404, 경로 탈출 차단', async () => {
@@ -67,10 +74,12 @@ test('방 입장과 상태 중계', async () => {
   const ja = await a.next();
   assert.equal(ja.t, 'joined');
   assert.equal(ja.room, 'TEST');
+  assert.equal(ja.host, ja.id);
 
   b.send(JSON.stringify({ t: 'join', room: 'TEST', name: 'B' }));
   const jb = await b.next();
   assert.equal(jb.players.length, 2);
+  assert.equal(jb.host, ja.id);
   assert.equal((await a.next()).t, 'peer_join');
 
   a.send(JSON.stringify({ t: 'state', s: { x: 1, z: 2 } }));
@@ -78,7 +87,7 @@ test('방 입장과 상태 중계', async () => {
   assert.deepEqual(st, { t: 'state', id: ja.id, s: { x: 1, z: 2 } });
 
   b.close();
-  assert.deepEqual(await a.next(), { t: 'peer_leave', id: jb.id });
+  assert.deepEqual(await a.next(), { t: 'peer_leave', id: jb.id, host: ja.id });
   a.close();
 });
 

@@ -69,6 +69,8 @@
       <button class="b t" data-p="sets" aria-expanded="false" aria-controls="sets">설정</button>
       <button class="b t" data-p="shop" aria-expanded="false" aria-controls="shop">해금</button>
       <button class="b t" data-p="logP" aria-expanded="false" aria-controls="logP">기록</button>
+      <button class="b t" data-p="rankP" aria-expanded="false" aria-controls="rankP">순위</button>
+      <button class="b t" data-p="netP" aria-expanded="false" aria-controls="netP">멀티</button>
     </div>
 
     <section id="helpP" class="pn" hidden aria-label="조작법">
@@ -79,8 +81,8 @@
       </ul>
       <h3>키보드와 마우스</h3>
       <ul>
-        <li>WASD 이동 · 마우스 조준 · 좌클릭 사격 · 우클릭 정조준</li>
-        <li>R 재장전 · E 점프 · 왼쪽 Shift 대시 · G 수류탄</li>
+        <li>WASD 이동 · 마우스 조준 · 좌클릭(또는 J) 사격 · 우클릭 정조준</li>
+        <li>R 재장전 · Space 점프 · 왼쪽 Shift 대시 · G 수류탄</li>
         <li>X 보조 사격 · V 근접 공격 · 1~6 또는 Q·휠 무기 교체</li>
         <li>P 또는 Esc 일시정지 · 키는 설정에서 변경</li>
       </ul>
@@ -123,6 +125,9 @@
       <button class="b o" id="snd" aria-pressed="true">소리 켬</button>
       <label class="sr" for="vol">음량 <output id="volv" for="vol"></output><input id="vol" type="range" min="0" max="1" step="0.05"></label>
       <h3>게임</h3>
+      <label class="sel" for="pname">이름 (순위·멀티 표시)
+        <input id="pname" type="text" maxlength="12" autocomplete="nickname">
+      </label>
       <label class="sel" for="diff">난이도
         <select id="diff"><option value="0">쉬움</option><option value="1">보통</option><option value="2">어려움</option></select>
       </label>
@@ -134,6 +139,26 @@
     <section id="shop" class="pn" hidden aria-label="해금">
       <p class="kh">보유 스프링클 <b id="cur">0</b> · 처치와 웨이브 진행으로 획득, 구매한 항목은 계속 유지</p>
       <div id="shopl"></div>
+    </section>
+
+    <section id="rankP" class="pn" hidden aria-label="순위">
+      <p class="kh" id="rks" role="status"></p>
+      <div class="tw"><table id="rkt"></table></div>
+    </section>
+
+    <section id="netP" class="pn" hidden aria-label="협동 멀티">
+      <p class="kh">2~4인 협동 · 같은 방 코드로 입장 · 먼저 들어온 사람이 방장</p>
+      <label class="sel" for="nname">이름
+        <input id="nname" type="text" maxlength="12" autocomplete="nickname">
+      </label>
+      <label class="sel" for="nroom">방 코드
+        <input id="nroom" type="text" maxlength="8" autocapitalize="characters" autocomplete="off" placeholder="영문·숫자 4~8자">
+      </label>
+      <div class="row">
+        <button class="b o" id="njoin">방 만들기 · 참가</button>
+        <button class="b o" id="nleave" hidden>나가기</button>
+      </div>
+      <p class="kh" id="nst" role="status" aria-live="polite">연결 안 됨</p>
     </section>
 
     <section id="logP" class="pn" hidden aria-label="기록">
